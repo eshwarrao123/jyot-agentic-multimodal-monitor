@@ -179,12 +179,21 @@ def cmd_eval(args: argparse.Namespace) -> int:
     if not args.gold.exists():
         raise CLIError(f"Gold dataset not found: {args.gold}")
     
-    print(f"[Phase 1] Eval command recognized: gold={args.gold}")
-    print("\n[!] Evaluation harness not yet implemented (Phase 5)")
-    print("This command will compute OCR CER/WER, classification metrics,")
-    print("deduplication metrics, safety metrics, and agent ablation.")
+    print(f"[Phase 2] Eval command recognized: gold={args.gold}")
     
-    return 0
+    manifest_file = args.gold / "manifest.json"
+    if manifest_file.is_file():
+        from jyot_monitor.evaluation.ocr_eval import run_ocr_eval_and_save
+        artifacts_dir = Path("artifacts/eval")
+        print("\n[+] Running Offline OCR Evaluation on Gold Fixtures...")
+        results, report = run_ocr_eval_and_save(args.gold, artifacts_dir)
+        print("\n" + report)
+        print("\n[Note] Phase 2 OCR evaluation complete. Full agent/classification evaluation will be expanded in Phase 5.")
+        return 0
+    else:
+        print("\n[!] Evaluation manifest not found in gold directory.")
+        print(f"Expected manifest at: {manifest_file}")
+        return 1
 
 
 def cmd_approve(args: argparse.Namespace) -> int:
@@ -207,6 +216,18 @@ def cmd_reject(args: argparse.Namespace) -> int:
 
 def main() -> int:
     """Main entry point."""
+    # Ensure Windows console uses UTF-8 to prevent charmap encoding errors
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
     parser = create_parser()
     
     try:

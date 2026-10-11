@@ -1,0 +1,233 @@
+{
+  "dataset_name": "jyot_ocr_gold_v1",
+  "description": "Synthetic controlled evaluation fixtures for multi-engine OCR and preprocessing ablation.",
+  "version": "1.0.0",
+  "total_records": 18,
+  "language_distribution": {
+    "en": 14,
+    "hi": 4
+  },
+  "difficulty_distribution": {
+    "easy": 9,
+    "medium": 3,
+    "hard": 6
+  },
+  "records": [
+    {
+      "record_id": "rec_en_clean_01",
+      "file_path": "images/rec_en_clean_01.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd. Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings. Remedy: Immediately stop using the bassinet and contact manufacturer for refund. Recall Number: CPSC-26-089 Units: 45,000",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_clean_02",
+      "file_path": "images/rec_en_clean_02.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit. Recommended Action: Return affected lots to pharmacy for replacement. Recall Number: FDA-D-2026-442",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_clean_03",
+      "file_path": "images/rec_en_clean_03.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "screenshot",
+      "ground_truth_text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injury. Consumer Action: Stop riding immediately and schedule free repair. Campaign ID: BIKE-26-901",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_clean_04",
+      "file_path": "images/rec_en_clean_04.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowout. Action: Authorized dealers will inspect and replace sensor module free of charge. Recall ID: NHTSA-26V-112",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_clean_05",
+      "file_path": "images/rec_en_clean_05.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "screenshot",
+      "ground_truth_text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 16oz Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illness. Remedy: Do not consume product. Return to store of purchase for full refund. Lot Codes: Lot 2605-B and Lot 2606-A",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_clean_06",
+      "file_path": "images/rec_en_clean_06.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing fire hazard. Recommended Action: Unplug heater immediately and register for replacement kit. Recall Identifier: HEATER-26-440 Units: 120,000",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_diff_rot15",
+      "file_path": "images/rec_en_diff_rot15.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "degradation": "rotation_15",
+      "document_type": "notice",
+      "ground_truth_text": "SAFETY RECALL NOTICE: 2-SLICE ELECTRIC TOASTER Product: QuickToast Deluxe Smart Toaster Manufacturer: CulinaryTech Devices Inc. Date: 2026-09-12 Hazard: Heating coils can remain energized after pop-up cycle. Remedy: Disconnect from power outlet and request repair box. Recall ID: CPSC-TOAST-26",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_diff_rot_neg20",
+      "file_path": "images/rec_en_diff_rot_neg20.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "degradation": "rotation_neg20",
+      "document_type": "notice",
+      "ground_truth_text": "BATTERY PACK OVERHEATING RECALL Product Name: Lithium-Ion 20V Max Power Drill Battery Manufacturer: PowerCraft Tool Corporation Recall Date: 2026-09-25 Hazard: Battery cells can short circuit during charging, creating fire risk. Consumer Action: Stop charging battery and recycle at authorized drop-off depot. Recall Number: BATT-26-880",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_diff_blur",
+      "file_path": "images/rec_en_diff_blur.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "degradation": "blur",
+      "document_type": "notice",
+      "ground_truth_text": "BURN HAZARD WARNING: CHILDREN SLEEPWEAR Product Name: CozyKids Fleece Pajama Sets Manufacturer: Global Apparel Solutions Notice Date: 2026-10-01 Hazard: Sleepwear fails to meet federal flammability standards. Remedy: Keep away from fire and return for full purchase price refund. Recall Number: CPSC-26-940",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_diff_lowcontrast",
+      "file_path": "images/rec_en_diff_lowcontrast.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "degradation": "low_contrast",
+      "document_type": "notice",
+      "ground_truth_text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc. Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke event. Action: Contact SafeGuard customer service for expedited sensor replacement. Model Number: SG-SMOKE-2026",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_en_diff_noise",
+      "file_path": "images/rec_en_diff_noise.png",
+      "page_number": null,
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "degradation": "noise",
+      "document_type": "notice",
+      "ground_truth_text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates. Remedy: Hospital biomedical engineers must apply firmware patch v3.2. Recall Campaign: MED-26-707",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_hi_clean_01",
+      "file_path": "images/rec_hi_clean_01.png",
+      "page_number": null,
+      "language": "hi",
+      "difficulty": "easy",
+      "category": "hindi",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "खाद्य सुरक्षा एवं मानक प्राधिकरण जन सूचना उत्पाद: शुद्ध मसाला पावडर ५०० ग्राम निर्माता: भारत स्पाइस उद्योग प्राइवेट लिमिटेड दिनांक: 2026-05-15 खतरा: स्वास्थ्य के लिए हानिकारक मिलावट की पुष्टि। कार्रवाई: उपभोक्ता तुरंत उपयोग बंद करें और धनवापसी प्राप्त करें। रिकॉल क्रमांक: FSSAI-26-102",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_hi_clean_02",
+      "file_path": "images/rec_hi_clean_02.png",
+      "page_number": null,
+      "language": "hi",
+      "difficulty": "medium",
+      "category": "hindi",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "खिलौना सुरक्षा चेतावनी सूचना उत्पाद: बच्चों की इलेक्ट्रॉनिक कार टॉय ब्रांड: बाल आनंद टॉयज कॉर्पोरेशन दिनांक: 2026-06-20 खतरा: छोटे पुर्जों के टूटने से बच्चों के लिए दम घुटने का गंभीर जोखिम। सुझाव: बच्चों से खिलौना तुरंत दूर रखें और निकटतम केंद्र पर लौटाएं। सुरक्षा कोड: TOY-HI-26",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_hi_clean_03",
+      "file_path": "images/rec_hi_clean_03.png",
+      "page_number": null,
+      "language": "hi",
+      "difficulty": "medium",
+      "category": "hindi",
+      "degradation": "none",
+      "document_type": "notice",
+      "ground_truth_text": "अग्नि सुरक्षा रिकॉल बुलेटिन उत्पाद का नाम: घरेलू रूम हीटर 2000 वॉट निर्माता: सूर्य इलेक्ट्रिकल्स लिमिटेड सूचना दिनांक: 2026-07-11 खतरा: अत्यधिक गर्म होने पर आग लगने और जलने का खतरा। उपभोक्ता निर्देश: बिजली का प्लग निकालें और निशुल्क मरम्मत कराएं। रिकॉल पहचान: SURYA-26-09",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_hi_clean_04",
+      "file_path": "images/rec_hi_clean_04.png",
+      "page_number": null,
+      "language": "hi",
+      "difficulty": "hard",
+      "category": "hindi",
+      "degradation": "noise",
+      "document_type": "notice",
+      "ground_truth_text": "वाहन सुरक्षा एवं गुणवत्ता चेतावनी वाहन मॉडल: गति ऑटो स्कूटर 125cc कंपनी: गति मोटर्स इंडिया लिमिटेड रिकॉल तिथि: 2026-08-04 खराबी: फ्रंट डिस्क ब्रेक के लॉक होने से दुर्घटना का अंदेशा। कदम: अधिकृत डीलर से संपर्क कर ब्रेक कैलीपर निःशुल्क बदलवाएं। अभियान संख्या: GATI-26-MOTO",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_pdf_page_01",
+      "file_path": "pdfs/sample_recall_notice_scanned.pdf",
+      "page_number": 1,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "scanned_pdf",
+      "degradation": "none",
+      "document_type": "scanned_page",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_pdf_page_02",
+      "file_path": "pdfs/sample_recall_notice_scanned.pdf",
+      "page_number": 2,
+      "language": "en",
+      "difficulty": "medium",
+      "category": "scanned_pdf",
+      "degradation": "none",
+      "document_type": "scanned_page",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing flash fire. Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800",
+      "is_synthetic": true
+    },
+    {
+      "record_id": "rec_pdf_page_03",
+      "file_path": "pdfs/sample_recall_notice_scanned.pdf",
+      "page_number": 3,
+      "language": "en",
+      "difficulty": "easy",
+      "category": "scanned_pdf",
+      "degradation": "none",
+      "document_type": "scanned_page",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Friday. Refund or replacement valve assembly provided free of charge. Bulletin Authorized by Office of Product Safety.",
+      "is_synthetic": true
+    }
+  ]
+}

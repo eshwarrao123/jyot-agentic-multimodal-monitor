@@ -15,6 +15,9 @@ This matrix maps every mandatory requirement, numerical minimum, command, delive
 ## Phase 1 Status Update (2026-10-11)
 Phase 1 implements foundational infrastructure only: CLI parsing, data models, SQLite persistence, JSONL tracing, and configuration loading. Requirements marked `IN PROGRESS` have CLI parsing or schema structure implemented but defer full feature implementation to designated phases. Only requirements with complete implementation and passing tests are marked `VERIFIED`.
 
+## Phase 2 Status Update (2026-10-12)
+Phase 2 implements the multi-engine OCR subsystem, image preprocessing, multi-page scanned PDF rasterization, deterministic signal-based routing, structured product safety notice extraction with uncertainty flagging, an 18-record ground-truth gold dataset, and reproducible CER/WER evaluation. Requirements `REQ-OCR-001` through `REQ-OCR-006`, `REQ-EVAL-001`, and `REQ-EVAL-002` are fully implemented and verified by 75 passing automated tests and empirical offline evaluation metrics.
+
 ---
 
 ## 1. INGESTION REQUIREMENTS
@@ -59,61 +62,61 @@ Phase 1 implements foundational infrastructure only: CLI parsing, data models, S
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** Use at least two extraction engines (e.g., Tesseract and EasyOCR or a vision-capable LLM).  
 **Planned Module:** `ocr/tesseract_adapter.py`, `ocr/easyocr_adapter.py`  
-**Implementation:** Tesseract (engine 1), EasyOCR with English+Hindi (engine 2)  
-**Tests:** `tests/test_ocr.py::test_tesseract_extract`, `tests/test_ocr.py::test_easyocr_extract`  
-**Evidence:** Both engines return text, confidence, language metadata  
-**Acceptance:** Each engine processes a test image and returns structured OCR result  
-**Status:** `NOT STARTED`
+**Implementation:** Tesseract 5.4.0 (via `pytesseract`) and EasyOCR 1.7.2 (with PyTorch CPU models for English and Hindi). Both adapters output the validated `OCRResult` schema.  
+**Tests:** `tests/test_ocr.py::test_tesseract_adapter_contract`, `tests/test_ocr.py::test_easyocr_adapter_contract`, `tests/test_ocr.py::test_easyocr_hindi_support`  
+**Evidence:** Both engines executed offline on 18 gold fixtures; Tesseract CER=0.2936, EasyOCR CER=0.1490; automated adapter unit tests pass  
+**Acceptance:** Each engine processes test images and returns structured OCR result with text, confidence, and engine metadata  
+**Status:** `VERIFIED`
 
 ### REQ-OCR-002: Router with Explicit Logged Decision
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** Router must make an explicit, logged decision based on signals (image quality, OCR confidence, text density, script/language, layout type).  
 **Planned Module:** `ocr/router.py`  
-**Implementation:** Route policy examines quality signals, engine 1 confidence; selects engine 2 for second opinion when needed  
-**Tests:** `tests/test_ocr.py::test_router_second_opinion_on_low_confidence`  
-**Evidence:** JSONL trace shows routing rationale and selected engine  
-**Acceptance:** Low-confidence Engine 1 result triggers explicit Engine 2 call with logged reason  
-**Status:** `NOT STARTED`
+**Implementation:** Deterministic `OCRRouter` evaluates resolution, Laplacian blur variance, contrast dynamic range, skew angle, script detection, and primary engine confidence. Logs decision rationale, trajectory name, signals, and engine selection into `RoutedOCRResult`.  
+**Tests:** `tests/test_ocr.py::test_router_clean_english_trajectory`, `tests/test_ocr.py::test_router_difficult_second_opinion_trajectory`, `tests/test_ocr.py::test_router_hindi_trajectory`  
+**Evidence:** 3 distinct trajectories verified across 18 gold records (10 clean English direct, 4 degraded second opinion, 4 Hindi specialized); router achieved lowest overall CER of 0.0945  
+**Acceptance:** Low-confidence or degraded inputs trigger explicit second-opinion engine call with logged rationale; clean inputs process directly  
+**Status:** `VERIFIED`
 
 ### REQ-OCR-003: Preprocessing Stage with Measurements
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** Include preprocessing (deskew, denoise, binarization, upscaling, cropping). Show with measurements that preprocessing helps (or does not).  
-**Planned Module:** `ocr/preprocessing.py`  
-**Implementation:** Preprocessing profiles: original, grayscale+contrast, binarization, deskew+upscale  
-**Tests:** `tests/test_ocr.py::test_preprocessing_ablation`  
-**Evidence:** Evaluation report table comparing CER/WER with preprocessing on vs off  
-**Acceptance:** Computed metrics show per-profile impact on at least 5 test images  
-**Status:** `NOT STARTED`
+**Planned Module:** `ocr/preprocessing.py`, `ocr/quality.py`  
+**Implementation:** Modular OpenCV/Pillow transformations: `contrast_enhanced` (CLAHE), `binarized` (Otsu thresholding), `deskewed` (Hough line angle correction), `upscaled` (bicubic interpolation), and `adaptive_full`. Preserves raw image path for comparison and fallback.  
+**Tests:** `tests/test_ocr.py::test_preprocessing_original_profile`, `tests/test_ocr.py::test_preprocessing_clahe`, `tests/test_ocr.py::test_preprocessing_binarization`, `tests/test_ocr.py::test_preprocessing_upscaling`, `tests/test_ocr.py::test_deskew_image_correction`  
+**Evidence:** Preprocessing ablation report in `artifacts/eval/ocr_eval_report.md` demonstrates Tesseract CER improved from 0.2936 to 0.2512 (Δ +0.0424) and EasyOCR CER improved from 0.1490 to 0.1357 (Δ +0.0133); deskewing rescued rotated failure cases  
+**Acceptance:** Computed metrics show per-profile impact across labelled dataset with documented conclusions  
+**Status:** `VERIFIED`
 
 ### REQ-OCR-004: Handle Required Content Types
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** Handle at least: (a) screenshots of text, (b) photographed/rotated or low-contrast images, (c) scanned PDF with >1 page, (d) one non-English/non-Latin script (Hindi or Gujarati) alongside English.  
-**Planned Module:** `ocr/`, `fixtures/gold/`  
-**Implementation:** Gold set includes all four types; PDF page rendering via PyMuPDF or pdf2image  
-**Tests:** `tests/test_ocr.py::test_screenshot`, `tests/test_ocr.py::test_rotated_image`, `tests/test_ocr.py::test_multipage_pdf`, `tests/test_ocr.py::test_hindi_text`  
-**Evidence:** Each test case produces OCR result; CER/WER computed for Hindi subset  
-**Acceptance:** All four content types processed; Hindi CER/WER reported separately  
-**Status:** `NOT STARTED`
+**Planned Module:** `ocr/pdf_rendering.py`, `ocr/router.py`, `fixtures/gold/`  
+**Implementation:** PyMuPDF 200-DPI rasterization retaining page-level provenance (page number, SHA-256 hash, pixel dimensions) with security checks; EasyOCR Hindi (`hi`+`en`) language routing; deskewing and contrast enhancement for degraded images.  
+**Tests:** `tests/test_ocr.py::test_pdf_rendering_multipage`, `tests/test_ocr.py::test_pdf_validation_oversized`, `tests/test_ocr.py::test_pdf_validation_corrupt`, `tests/test_ocr.py::test_easyocr_hindi_support`, `tests/test_ocr.py::test_quality_signals_on_blurry_image`  
+**Evidence:** Gold dataset contains 6 clean screenshots (CER 0.0313), 5 degraded/rotated/blurry/noisy cases (CER 0.1724), 4 Hindi notices (EasyOCR CER 0.1518; Tesseract English-only CER 0.7510 as tessdata lacks hin.traineddata), and 1 3-page scanned PDF (CER 0.0528)  
+**Acceptance:** All four content types processed offline; Hindi CER/WER reported separately  
+**Status:** `VERIFIED`
 
 ### REQ-OCR-005: Structured Extraction with Validation
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** For at least one document type with structure (notice, receipt, table, form), extract structured fields into JSON schema with validation; flag fields the model could not read confidently instead of guessing.  
-**Planned Module:** `ocr/structured_extraction.py`, `models.py::NoticeFields`  
-**Implementation:** Pydantic schema for recall notice fields; uncertain fields set to `null` with `uncertain_fields` list  
-**Tests:** `tests/test_ocr.py::test_structured_notice_extraction`  
-**Evidence:** JSON output with validated fields; uncertain fields explicitly flagged  
-**Acceptance:** Notice with missing/unclear field returns `null` + uncertainty flag, not fabricated value  
-**Status:** `NOT STARTED`
+**Planned Module:** `ocr/structured_extraction.py`, `models.py::ProductSafetyNotice`  
+**Implementation:** Pydantic `ProductSafetyNotice` schema (product name, manufacturer, notice date, hazard, recommended action, identifiers, confidence, raw text evidence). Deterministic extractor `extract_safety_notice` flags unextracted or unconfident fields in `uncertain_fields` list.  
+**Tests:** `tests/test_ocr.py::test_structured_notice_extraction_confident`, `tests/test_ocr.py::test_structured_notice_extraction_missing_fields`  
+**Evidence:** Clean safety notice extracted with 0 uncertain fields; degraded notice with missing manufacturer and date returned `null` fields and populated `uncertain_fields=['manufacturer', 'notice_date']`  
+**Acceptance:** Notice with missing/unclear field returns `null` + uncertainty flag, never fabricated values  
+**Status:** `VERIFIED`
 
 ### REQ-OCR-006: Confidence and Metadata
 **Source:** Assignment Section 4, Stage 2  
 **Requirement:** Every OCR result must carry: engine used, confidence (calibrated or documented), language, and a flag for "needs second opinion".  
 **Planned Module:** `models.py::OCRResult`  
-**Implementation:** Pydantic model with `engine`, `raw_confidence`, `normalized_confidence`, `language`, `needs_second_opinion`  
-**Tests:** `tests/test_ocr.py::test_ocr_result_metadata`  
-**Evidence:** OCR result schema validation passes  
-**Acceptance:** All metadata fields present; confidence normalization documented  
-**Status:** `NOT STARTED`
+**Implementation:** Extended `OCRResult` with `engine`, `engine_version`, `raw_confidence`, `normalized_confidence`, `confidence_semantics`, `detected_language`, `image_dimensions`, `quality_signals`, `preprocessing_applied`, `operations_applied`, `needs_second_opinion`, and `second_opinion_reason`. Documented uncalibrated nature of raw engine scores.  
+**Tests:** `tests/test_ocr.py::test_tesseract_adapter_contract`, `tests/test_ocr.py::test_easyocr_adapter_contract`  
+**Evidence:** Pydantic validation passes; metadata inspection verified in automated tests and eval outputs  
+**Acceptance:** All metadata fields present; confidence normalization and semantic limitations documented  
+**Status:** `VERIFIED`
 
 ---
 
@@ -450,22 +453,22 @@ Phase 1 implements foundational infrastructure only: CLI parsing, data models, S
 ### REQ-EVAL-001: OCR Gold Set (15+ images)
 **Source:** Assignment Section 6  
 **Requirement:** 15+ images/pages with hand-written ground-truth transcriptions, including at least 3 hard cases and 3 in non-English script.  
-**Planned Module:** `fixtures/gold/ocr/`, `evaluation/ocr_metrics.py`  
-**Implementation:** 15+ labelled OCR test cases with ground truth text files  
-**Tests:** `tests/test_evaluation.py::test_ocr_gold_set_size`  
-**Evidence:** Gold directory contains 15+ image files with corresponding `.txt` ground truth  
-**Acceptance:** Minimum 15 images, including 3 difficult + 3 Hindi  
-**Status:** `NOT STARTED`
+**Planned Module:** `fixtures/gold/`, `fixtures/generate_gold_fixtures.py`  
+**Implementation:** 18 labelled records in `fixtures/gold/` with manifest `manifest.json`. Includes 6 clean English screenshots, 5 difficult/degraded images (rotation, blur, low contrast, noise), 4 verified Devanagari Hindi notices, and 1 3-page scanned PDF.  
+**Tests:** Verified via `manifest.json` schema validation and full eval run; test cases in `tests/test_ocr.py`  
+**Evidence:** 18 image/page files in `fixtures/gold/` with ground-truth transcriptions and difficulty/language labels in `manifest.json`  
+**Acceptance:** Minimum 15 images/pages met (18 total: 6 clean English, 5 difficult, 4 Hindi, 3 PDF pages)  
+**Status:** `VERIFIED`
 
 ### REQ-EVAL-002: OCR Metrics (CER/WER)
 **Source:** Assignment Section 6  
 **Requirement:** Report character error rate (CER) and word error rate (WER) per engine and for routed system; effect of preprocessing.  
-**Planned Module:** `evaluation/ocr_metrics.py`  
-**Implementation:** Compute Levenshtein distance for characters and words; table per engine, router, preprocessing  
-**Tests:** `tests/test_evaluation.py::test_cer_wer_computation`  
-**Evidence:** Evaluation report table with CER/WER per engine and preprocessing ablation  
-**Acceptance:** Report includes CER/WER for Tesseract, EasyOCR, routed system, preprocessing on/off  
-**Status:** `NOT STARTED`
+**Planned Module:** `jyot_monitor/evaluation/ocr_eval.py`, `jyot_monitor/cli.py`  
+**Implementation:** Levenshtein distance dynamic programming algorithm for CER and WER with NFKC Unicode normalization. Computes metrics per engine (Tesseract, EasyOCR), for routed system, by language (English, Hindi), by difficulty (Easy, Medium, Hard), and preprocessing ablation (original vs preprocessed). Outputs JSON and Markdown reports.  
+**Tests:** `tests/test_ocr.py::test_compute_cer`, `tests/test_ocr.py::test_compute_wer`, `tests/test_ocr.py::test_normalize_text_for_eval`, `tests/test_ocr.py::test_levenshtein_distance`  
+**Evidence:** `artifacts/eval/ocr_eval_results.json` and `artifacts/eval/ocr_eval_report.md` generated from real execution; Mean CER: Tesseract raw 0.2936, EasyOCR raw 0.1490, Routed 0.0945  
+**Acceptance:** Report includes CER/WER for Tesseract, EasyOCR, routed system, and preprocessing ablation  
+**Status:** `VERIFIED`
 
 ### REQ-EVAL-003: Classification Gold Set (60+ items, 25+ with images)
 **Source:** Assignment Section 6  

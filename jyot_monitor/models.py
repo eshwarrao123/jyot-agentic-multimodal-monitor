@@ -12,11 +12,16 @@ All models represent the foundational data contracts for:
 Security boundary: All content from sources is untrusted data.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field, field_validator
 import hashlib
+
+
+def utc_now() -> datetime:
+    """Return timezone-aware current UTC time."""
+    return datetime.now(timezone.utc)
 
 
 class ItemStatus(str, Enum):
@@ -70,7 +75,7 @@ class SourceItem(BaseModel):
     title: str = Field(..., description="Item title (untrusted)")
     body: Optional[str] = Field(None, description="Item body text (untrusted)")
     content_hash: str = Field(..., description="SHA-256 of normalized content")
-    fetch_time: datetime = Field(default_factory=datetime.utcnow)
+    fetch_time: datetime = Field(default_factory=utc_now)
     status: ItemStatus = Field(default=ItemStatus.PENDING)
     error_code: Optional[str] = None
 
@@ -100,9 +105,12 @@ class OCRResult(BaseModel):
     """
     Result from OCR extraction.
     
-    Confidence values are engine-specific and should be documented.
+    Confidence values are engine-specific and documented.
     """
+    item_id: Optional[str] = Field(None, description="Source item identifier if available")
+    attachment_id: Optional[str] = Field(None, description="Attachment identifier if available")
     engine: str = Field(..., description="tesseract, easyocr, etc.")
+    engine_version: Optional[str] = Field(None, description="Obtained engine version")
     text: str = Field(..., description="Extracted text (untrusted data)")
     raw_confidence: Optional[float] = Field(None, description="Engine-specific confidence")
     normalized_confidence: Optional[float] = Field(
@@ -111,13 +119,86 @@ class OCRResult(BaseModel):
         le=1.0,
         description="Normalized 0.0-1.0 confidence scale"
     )
-    language: Optional[str] = Field(None, description="Detected language code")
-    needs_second_opinion: bool = Field(
+    confidence_semantics: Optional[str] = Field(
+        None,
+        description="Explanation of engine-specific confidence metric and limitations"
+    )
+    language: Optional[str] = Field(None, description="Detected or selected language code")
+    image_dimensions: Optional[Tuple[int, int]] = Field(
+        None,
+        description="Image dimensions as (width, height)"
+    )
+    quality_signals: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Image quality signals: blur_score, contrast_score, mean_brightness, etc."
+    )
+    preprocessing_applied: bool = Field(
         default=False,
-        description="Flag indicating low confidence or quality"
+        description="Whether image preprocessing was applied before OCR"
+    )
+    preprocessing_operations: List[str] = Field(
+        default_factory=list,
+        description="List of applied operations (e.g. ['deskew', 'clahe', 'otsu'])"
     )
     preprocessing: Optional[str] = Field(None, description="Preprocessing profile used")
+    needs_second_opinion: bool = Field(
+        default=False,
+        description="Flag indicating low confidence, poor quality, or ambiguous output"
+    )
+    second_opinion_reason: Optional[str] = Field(
+        None,
+        description="Documented rationale for triggering second opinion"
+    )
+    errors: List[str] = Field(default_factory=list, description="Non-fatal errors encountered")
+    warnings: List[str] = Field(default_factory=list, description="Warnings during OCR execution")
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RoutedOCRResult(BaseModel):
+    """
+    Result of the explicit multi-engine OCR router.
+    
+    Records engine choice, routing signals, rationale, second opinion, and final output.
+    """
+    selected_engine: str = Field(..., description="Initial engine chosen by router")
+    initial_result: OCRResult = Field(..., description="Initial OCR attempt result")
+    second_opinion_result: Optional[OCRResult] = Field(
+        None,
+        description="Second opinion result if triggered"
+    )
+    final_result: OCRResult = Field(..., description="Final selected/best OCR result")
+    routing_signals: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Signals considered by router (quality, language, confidence)"
+    )
+    decision_rationale: str = Field(..., description="Deterministic decision explanation")
+    trajectory_name: str = Field(..., description="Trajectory name (e.g. clean_english_direct)")
+
+
+class ProductSafetyNotice(BaseModel):
+    """
+    Validated structured schema for product safety and recall notice extraction.
+    
+    Fields that cannot be read confidently are set to None and recorded in uncertain_fields.
+    Evidence text is preserved for provenance.
+    """
+    product_name: Optional[str] = Field(None, description="Name of the recalled product")
+    manufacturer: Optional[str] = Field(None, description="Manufacturer, distributor, or brand")
+    notice_date: Optional[str] = Field(None, description="Date of recall or safety notice")
+    hazard: Optional[str] = Field(None, description="Safety hazard or risk description")
+    recommended_action: Optional[str] = Field(None, description="Remedy or action required for consumers")
+    recall_identifier: Optional[str] = Field(None, description="Official recall number, campaign ID, or units")
+    raw_ocr_text: str = Field(..., description="Underlying OCR text evidence")
+    uncertain_fields: List[str] = Field(
+        default_factory=list,
+        description="Fields that could not be determined with high confidence"
+    )
+    confidence_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Estimated completeness and confidence of structured extraction"
+    )
 
 
 # --- Agent Models ---
@@ -149,7 +230,7 @@ class TraceEvent(BaseModel):
     run_id: str
     item_id: str
     step_index: int = Field(..., ge=0)
-    timestamp_utc: datetime = Field(default_factory=datetime.utcnow)
+    timestamp_utc: datetime = Field(default_factory=utc_now)
     planner_mode: PlannerMode
     tool: ToolName
     arguments_summary: Dict[str, Any] = Field(
@@ -217,7 +298,7 @@ class AlertProposal(BaseModel):
         description="Source URL, redacted snippets, confidence, verification"
     )
     status: ProposalStatus = Field(default=ProposalStatus.PENDING)
-    created_time: datetime = Field(default_factory=datetime.utcnow)
+    created_time: datetime = Field(default_factory=utc_now)
     approved_time: Optional[datetime] = None
     
     @field_validator('evidence_json')
@@ -234,7 +315,7 @@ class AlertProposal(BaseModel):
 class RunMetadata(BaseModel):
     """Metadata for a single run of the monitor."""
     run_id: str
-    run_time: datetime = Field(default_factory=datetime.utcnow)
+    run_time: datetime = Field(default_factory=utc_now)
     mode: str = Field(..., description="live or replay")
     item_count: int = Field(default=0, ge=0)
     budget_used_usd: float = Field(default=0.0, ge=0.0)
