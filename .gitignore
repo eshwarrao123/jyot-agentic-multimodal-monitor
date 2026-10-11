@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local state, downloaded models, and generated scratch output
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+data/
+artifacts/traces/
+artifacts/digests/
+artifacts/approvals/
+artifacts/eval/
+models/
+.cache/
+.cache-*/
+tmp/
+temp/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Confidential assignment
+source/JYOT_ASSIGNMENT_ORIGINAL.txt
