@@ -1,0 +1,31 @@
+sources:
+  - name: "CPSC Recalls"
+    type: rss
+    url: "https://www.cpsc.gov/Newsroom/CPSC-RSS-Feed/Recalls-RSS"
+    allowed_hosts:
+      - "www.cpsc.gov"
+      - "cpsc.gov"
+    poll_interval_seconds: 3600
+  - name: "FDA Recalls"
+    type: rss
+    url: "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml"
+    allowed_hosts:
+      - "www.fda.gov"
+      - "fda.gov"
+    poll_interval_seconds: 3600
+
+limits:
+  max_items_per_run: 100
+  max_steps_per_item: 10
+  http_timeout_seconds: 30
+  max_download_bytes: 10485760  # 10 MB
+  max_retries: 3
+  
+budgets:
+  per_item_usd: 0.10
+  per_run_usd: 5.00
+  
+thresholds:
+  ocr_confidence_second_opinion: 0.7
+  urgency_critique_threshold: 75.0
+  urgency_alert_threshold: 85.0
