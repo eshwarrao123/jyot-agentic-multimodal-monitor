@@ -17,12 +17,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 
+import json
 from jyot_monitor.models import (
     SourceItem,
     Attachment,
     ItemStatus,
     ProposalStatus,
-    AlertProposal
+    AlertProposal,
+    StoryCluster,
+    utc_now,
 )
 
 
@@ -224,6 +227,26 @@ class Storage:
                 ON alert_proposals(status)
             """)
             
+            # Item features and reporting state for persistent memory & search
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS item_features (
+                    item_id TEXT PRIMARY KEY,
+                    image_phash TEXT,
+                    ocr_text TEXT,
+                    taxonomy TEXT,
+                    relevance_score REAL,
+                    urgency_score REAL,
+                    reporting_status TEXT DEFAULT 'new',
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (item_id) REFERENCES items(item_id)
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_features_phash 
+                ON item_features(image_phash)
+            """)
+
             # Mark schema as initialized
             cursor.execute("""
                 INSERT OR IGNORE INTO schema_version (version) VALUES (?)
@@ -399,3 +422,258 @@ class Storage:
             """)
             return [(row['proposal_id'], row['item_id'], row['urgency'])
                     for row in cursor.fetchall()]
+
+    def get_alert_proposal(self, proposal_id: str) -> Optional[AlertProposal]:
+        """Fetch an alert proposal by ID."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT proposal_id, item_id, urgency, evidence_json, status, created_time, approved_time
+                FROM alert_proposals
+                WHERE proposal_id = ?
+            """, (proposal_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            try:
+                raw_data = json.loads(row['evidence_json'])
+                if isinstance(raw_data, dict) and 'evidence_json' in raw_data:
+                    ev_dict = raw_data['evidence_json']
+                else:
+                    ev_dict = raw_data if isinstance(raw_data, dict) else {}
+                return AlertProposal(
+                    proposal_id=row['proposal_id'],
+                    item_id=row['item_id'],
+                    urgency=float(row['urgency']),
+                    evidence_json=ev_dict,
+                    status=ProposalStatus(row['status']),
+                    created_time=row['created_time'],
+                    approved_time=row['approved_time']
+                )
+            except Exception:
+                return None
+
+
+    # --- Story Clusters & Memory Management ---
+
+    def save_cluster(self, cluster: StoryCluster) -> None:
+        """Save or update a story cluster and its member associations."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO clusters (cluster_id, representative_item_id, created_time, last_updated)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(cluster_id) DO UPDATE SET
+                    representative_item_id = excluded.representative_item_id,
+                    last_updated = excluded.last_updated
+            """, (
+                cluster.cluster_id,
+                cluster.representative_item_id,
+                cluster.created_time,
+                cluster.last_updated
+            ))
+
+            for member_id in cluster.member_item_ids:
+                sim_score = cluster.similarity_evidence.get(member_id, {}).get("score", 1.0) if isinstance(cluster.similarity_evidence.get(member_id), dict) else 1.0
+                cursor.execute("""
+                    INSERT INTO cluster_members (cluster_id, item_id, similarity_score, join_time)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(cluster_id, item_id) DO UPDATE SET
+                        similarity_score = excluded.similarity_score
+                """, (cluster.cluster_id, member_id, sim_score))
+
+    def get_cluster(self, cluster_id: str) -> Optional[StoryCluster]:
+        """Retrieve a story cluster by ID."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT cluster_id, representative_item_id, created_time, last_updated
+                FROM clusters WHERE cluster_id = ?
+            """, (cluster_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            cursor.execute("""
+                SELECT item_id, similarity_score FROM cluster_members WHERE cluster_id = ?
+            """, (cluster_id,))
+            member_rows = cursor.fetchall()
+            members = [r['item_id'] for r in member_rows]
+            evidence = {r['item_id']: {"score": r['similarity_score']} for r in member_rows}
+
+            return StoryCluster(
+                cluster_id=row['cluster_id'],
+                representative_item_id=row['representative_item_id'],
+                member_item_ids=members,
+                similarity_evidence=evidence,
+                created_time=datetime.fromisoformat(str(row['created_time'])) if isinstance(row['created_time'], str) else row['created_time'],
+                last_updated=datetime.fromisoformat(str(row['last_updated'])) if isinstance(row['last_updated'], str) else row['last_updated'],
+            )
+
+    def get_item_cluster(self, item_id: str) -> Optional[StoryCluster]:
+        """Find the cluster containing a specific item."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT cluster_id FROM cluster_members WHERE item_id = ? LIMIT 1
+            """, (item_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return self.get_cluster(row['cluster_id'])
+
+    def get_all_clusters(self) -> List[StoryCluster]:
+        """Retrieve all story clusters."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT cluster_id FROM clusters ORDER BY last_updated DESC")
+            cluster_ids = [row['cluster_id'] for row in cursor.fetchall()]
+        
+        clusters = []
+        for cid in cluster_ids:
+            c = self.get_cluster(cid)
+            if c:
+                clusters.append(c)
+        return clusters
+
+    # --- Item Features & Reporting State ---
+
+    def save_item_features(
+        self,
+        item_id: str,
+        image_phash: Optional[str] = None,
+        ocr_text: Optional[str] = None,
+        taxonomy: Optional[str] = None,
+        relevance_score: Optional[float] = None,
+        urgency_score: Optional[float] = None,
+        reporting_status: str = "new",
+    ) -> None:
+        """Save or update extracted item features for memory search."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO item_features (
+                    item_id, image_phash, ocr_text, taxonomy,
+                    relevance_score, urgency_score, reporting_status, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(item_id) DO UPDATE SET
+                    image_phash = COALESCE(excluded.image_phash, item_features.image_phash),
+                    ocr_text = COALESCE(excluded.ocr_text, item_features.ocr_text),
+                    taxonomy = COALESCE(excluded.taxonomy, item_features.taxonomy),
+                    relevance_score = COALESCE(excluded.relevance_score, item_features.relevance_score),
+                    urgency_score = COALESCE(excluded.urgency_score, item_features.urgency_score),
+                    reporting_status = excluded.reporting_status,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (
+                item_id, image_phash, ocr_text, taxonomy,
+                relevance_score, urgency_score, reporting_status
+            ))
+
+    def get_item_features(self, item_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve features for an item."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT item_id, image_phash, ocr_text, taxonomy,
+                       relevance_score, urgency_score, reporting_status, updated_at
+                FROM item_features WHERE item_id = ?
+            """, (item_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return dict(row)
+
+    def get_all_item_features(self) -> List[Dict[str, Any]]:
+        """Retrieve all item features for memory search."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT f.item_id, f.image_phash, f.ocr_text, f.taxonomy,
+                       f.relevance_score, f.urgency_score, f.reporting_status,
+                       i.title, i.body, i.source, i.url, i.content_hash
+                FROM item_features f
+                JOIN items i ON f.item_id = i.item_id
+            """)
+            return [dict(r) for r in cursor.fetchall()]
+
+    # --- Cache Operations ---
+
+    def save_ocr_cache(
+        self,
+        content_hash: str,
+        engine: str,
+        preprocessing: Optional[str],
+        text: str,
+        confidence: Optional[float] = None,
+        language: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Cache an OCR result by content hash and engine."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO ocr_cache (
+                    content_hash, engine, preprocessing, text,
+                    confidence, language, metadata_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                content_hash, engine, preprocessing or "none", text,
+                confidence, language, json.dumps(metadata or {})
+            ))
+
+    def get_ocr_cache(
+        self,
+        content_hash: str,
+        engine: str,
+        preprocessing: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Retrieve cached OCR result."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT text, confidence, language, metadata_json
+                FROM ocr_cache
+                WHERE content_hash = ? AND engine = ? AND preprocessing = ?
+            """, (content_hash, engine, preprocessing or "none"))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                "text": row['text'],
+                "confidence": row['confidence'],
+                "language": row['language'],
+                "metadata": json.loads(row['metadata_json']) if row['metadata_json'] else {}
+            }
+
+    def save_llm_cache(
+        self,
+        input_hash: str,
+        model: str,
+        response_json: str,
+        prompt_version: Optional[str] = None,
+        tokens_in: Optional[int] = None,
+        tokens_out: Optional[int] = None,
+        cost_usd: Optional[float] = None,
+    ) -> None:
+        """Cache an LLM response by input hash and model."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO llm_cache (
+                    input_hash, model, prompt_version, response_json,
+                    tokens_in, tokens_out, cost_usd
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (input_hash, model, prompt_version, response_json, tokens_in, tokens_out, cost_usd))
+
+    def get_llm_cache(self, input_hash: str, model: str) -> Optional[Dict[str, Any]]:
+        """Retrieve cached LLM response."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT response_json, tokens_in, tokens_out, cost_usd, prompt_version
+                FROM llm_cache WHERE input_hash = ? AND model = ?
+            """, (input_hash, model))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return dict(row)

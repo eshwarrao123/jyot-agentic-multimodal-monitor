@@ -84,6 +84,16 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable deterministic fault injection for testing"
     )
+    run_parser.add_argument(
+        "--strict-llm",
+        action="store_true",
+        help="Disallow fallback; raise error if LLM fails or is unavailable"
+    )
+    run_parser.add_argument(
+        "--item-id",
+        type=str,
+        help="Target specific item ID for replay execution"
+    )
     
     # eval command
     eval_parser = subparsers.add_parser(
@@ -144,33 +154,40 @@ def cmd_run(args: argparse.Namespace) -> int:
     validate_run_args(args)
     
     mode = "live" if args.live else "replay"
-    
-    print(f"[Phase 1] Run command recognized: mode={mode}, top_n={args.top_n}")
+    print(f"[Phase 3] Run command recognized: mode={mode}, top_n={args.top_n}")
     
     if args.fault_injection:
-        print("[Phase 1] Fault injection enabled")
+        print("[Phase 3] Fault injection flag noted (handled in Phase 4 fault suite)")
     
     if args.budget_usd:
-        print(f"[Phase 1] Budget override: ${args.budget_usd:.2f}")
-    
-    # Phase 1: Foundation only
-    print("\n[!] PHASE 1 FOUNDATION MODE")
-    print("The following features are NOT YET IMPLEMENTED:")
-    print("  - Live source ingestion (Phase 4)")
-    print("  - OCR extraction (Phase 2)")
-    print("  - Agent planning and tool execution (Phase 3)")
-    print("  - Scoring and deduplication (Phase 3)")
-    print("  - Digest generation (Phase 5)")
-    print()
-    print("Phase 1 provides:")
-    print("  [+] CLI argument parsing")
-    print("  [+] Configuration loading")
-    print("  [+] SQLite schema and persistence")
-    print("  [+] JSONL trace writing")
-    print("  [+] Fixture loading structure")
-    print()
-    print("Run `pytest` to verify foundation tests.")
-    
+        print(f"[Phase 3] Budget override: ${args.budget_usd:.2f}")
+
+    if mode == "replay":
+        from jyot_monitor.replay import run_replay
+        print(f"\n[+] Executing Offline Replay on: {args.replay}")
+        summary = run_replay(
+            fixtures_dir=args.replay,
+            budget_usd=args.budget_usd,
+            top_n=args.top_n,
+            strict_llm=args.strict_llm,
+            target_item_id=args.item_id,
+        )
+        print("\n=== Replay Execution Summary ===")
+        print(f"Run ID:            {summary.run_id}")
+        print(f"Total Items:       {summary.total_items}")
+        print(f"Completed Items:   {summary.completed_count}")
+        print(f"Partial Items:     {summary.partial_count}")
+        print(f"Error Items:       {summary.error_count}")
+        print(f"Alert Proposals:   {summary.proposals_count}")
+        print(f"Total Cost USD:    ${summary.total_cost_usd:.6f}")
+        print(f"Duration:          {summary.duration_seconds:.2f}s")
+        if summary.trace_file:
+            print(f"JSONL Trace File:  {summary.trace_file}")
+        print("================================")
+        return 0
+
+    print("\n[!] LIVE INGESTION MODE")
+    print("Live network RSS/HTML ingestion is scheduled for Phase 4.")
     return 0
 
 
@@ -198,20 +215,53 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
 def cmd_approve(args: argparse.Namespace) -> int:
     """Execute the approve command."""
-    print(f"[Phase 1] Approve command recognized: proposal_id={args.proposal_id}")
-    print("\n[!] Approval system not yet implemented (Phase 5)")
-    print("This command will mark a proposal as approved and emit the alert.")
+    from jyot_monitor.storage import Storage
+    from jyot_monitor.models import ProposalStatus
     
-    return 0
+    db_path = Path("artifacts/monitor.db")
+    if not db_path.exists():
+        print(f"Error: Database not found at {db_path}", file=sys.stderr)
+        return 1
+    
+    storage = Storage(db_path)
+    proposal = storage.get_alert_proposal(args.proposal_id)
+    if not proposal:
+        print(f"Error: Proposal '{args.proposal_id}' not found.", file=sys.stderr)
+        return 1
+    
+    updated = storage.update_proposal_status(args.proposal_id, ProposalStatus.APPROVED)
+    if updated:
+        print(f"[+] Alert Proposal '{args.proposal_id}' APPROVED successfully by human operator.")
+        return 0
+    else:
+        print(f"[!] Proposal '{args.proposal_id}' was not pending (status: {proposal.status.value}).", file=sys.stderr)
+        return 1
 
 
 def cmd_reject(args: argparse.Namespace) -> int:
     """Execute the reject command."""
-    print(f"[Phase 1] Reject command recognized: proposal_id={args.proposal_id}")
-    print("\n[!] Approval system not yet implemented (Phase 5)")
-    print("This command will mark a proposal as rejected.")
+    from jyot_monitor.storage import Storage
+    from jyot_monitor.models import ProposalStatus
     
-    return 0
+    db_path = Path("artifacts/monitor.db")
+    if not db_path.exists():
+        print(f"Error: Database not found at {db_path}", file=sys.stderr)
+        return 1
+    
+    storage = Storage(db_path)
+    proposal = storage.get_alert_proposal(args.proposal_id)
+    if not proposal:
+        print(f"Error: Proposal '{args.proposal_id}' not found.", file=sys.stderr)
+        return 1
+    
+    updated = storage.update_proposal_status(args.proposal_id, ProposalStatus.REJECTED)
+    if updated:
+        print(f"[+] Alert Proposal '{args.proposal_id}' REJECTED successfully by human operator.")
+        return 0
+    else:
+        print(f"[!] Proposal '{args.proposal_id}' was not pending (status: {proposal.status.value}).", file=sys.stderr)
+        return 1
+
 
 
 def main() -> int:

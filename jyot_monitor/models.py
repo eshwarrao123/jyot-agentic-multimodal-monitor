@@ -257,7 +257,30 @@ class TraceEvent(BaseModel):
         return self.model_dump_json(exclude_none=False) + "\n"
 
 
-# --- Scoring and Classification Models ---
+class RecallTaxonomy(str, Enum):
+    """Documented taxonomy for product-recall and safety notices."""
+    PRODUCT_RECALL = "product_recall"
+    HEALTH_HAZARD = "health_hazard"
+    CONTAMINATION = "contamination"
+    UNSAFE_EQUIPMENT = "unsafe_equipment"
+    CONSUMER_WARNING = "consumer_warning"
+    NON_SAFETY = "non_safety"
+    SPAM_MANIPULATION = "spam_manipulation"
+    UNCERTAIN = "uncertain"
+
+
+class ToolResult(BaseModel):
+    """
+    Standard schema for tool execution results.
+    
+    Security: returned data is evidence, not executable code.
+    """
+    tool_name: ToolName
+    status: str = Field(default="success", description="success, error, or unavailable")
+    data: Dict[str, Any] = Field(default_factory=dict)
+    error_message: Optional[str] = None
+    is_evidence: bool = True
+
 
 class ScoreBreakdown(BaseModel):
     """Component scores for transparency."""
@@ -284,6 +307,56 @@ class ScoreBreakdown(BaseModel):
         )
 
 
+class ClassificationResult(BaseModel):
+    """Structured classification and scoring result."""
+    taxonomy: RecallTaxonomy
+    relevance_score: float = Field(..., ge=0.0, le=100.0)
+    urgency_score: float = Field(..., ge=0.0, le=100.0)
+    score_breakdown: Optional[ScoreBreakdown] = None
+    hazard_description: Optional[str] = None
+    affected_products: List[str] = Field(default_factory=list)
+    evidence_snippets: List[str] = Field(default_factory=list)
+    uncertainty_notes: Optional[str] = None
+    is_unverified: bool = False
+
+
+class VerificationStatus(str, Enum):
+    """Outcome of claim verification."""
+    SUPPORTED = "supported"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+    CONTRADICTED = "contradicted"
+    UNVERIFIED = "unverified"
+
+
+class VerificationResult(BaseModel):
+    """Result of claim verification against independent sources."""
+    status: VerificationStatus
+    independent_sources_count: int = 0
+    corroborating_item_ids: List[str] = Field(default_factory=list)
+    rationale: str
+
+
+class CritiqueResult(BaseModel):
+    """Result of self-checking critique for high-urgency items."""
+    pre_critique_urgency: float = Field(..., ge=0.0, le=100.0)
+    post_critique_urgency: float = Field(..., ge=0.0, le=100.0)
+    urgency_changed: bool = False
+    challenge_points: List[str] = Field(default_factory=list)
+    uncertainties_identified: List[str] = Field(default_factory=list)
+    should_propose_alert: bool = False
+    critique_rationale: str = ""
+
+
+class StoryCluster(BaseModel):
+    """A persistent story cluster grouping related/duplicate items."""
+    cluster_id: str
+    representative_item_id: str
+    member_item_ids: List[str] = Field(default_factory=list)
+    similarity_evidence: Dict[str, Any] = Field(default_factory=dict)
+    created_time: datetime = Field(default_factory=utc_now)
+    last_updated: datetime = Field(default_factory=utc_now)
+
+
 class AlertProposal(BaseModel):
     """
     A proposed alert that requires human approval.
@@ -308,6 +381,25 @@ class AlertProposal(BaseModel):
         if 'source_url' not in v:
             raise ValueError("evidence_json must include source_url")
         return v
+
+
+class ItemProcessingResult(BaseModel):
+    """Execution summary for a processed item."""
+    item_id: str
+    status: ItemStatus
+    steps_taken: int
+    completed_tools: List[ToolName]
+    final_scores: Optional['ClassificationResult'] = None
+    verification: Optional['VerificationResult'] = None
+    critique: Optional['CritiqueResult'] = None
+    alert_proposal: Optional[AlertProposal] = None
+    cluster_id: Optional[str] = None
+    error_message: Optional[str] = None
+    fallback_used: bool = False
+    tokens_in: int = 0
+    tokens_out: int = 0
+    cost_usd: float = 0.0
+    total_latency_ms: float = 0.0
 
 
 # --- Run Metadata ---
