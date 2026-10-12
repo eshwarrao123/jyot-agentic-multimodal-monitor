@@ -16,6 +16,7 @@ import uuid
 from jyot_monitor.agent.controller import AgentController
 from jyot_monitor.agent.planner import LLMPlanner, DeterministicFallbackPlanner
 from jyot_monitor.agent.tools.registry import get_default_tool_registry
+from jyot_monitor.fault_injection import FaultInjector
 from jyot_monitor.llm.client import OllamaClient
 from jyot_monitor.models import (
     Attachment,
@@ -107,6 +108,7 @@ def run_replay(
     llm_client: Optional[Any] = None,
     strict_llm: bool = False,
     target_item_id: Optional[str] = None,
+    fault_injection: bool = False,
 ) -> ReplayExecutionSummary:
     """
     Execute offline replay through AgentController.
@@ -126,6 +128,7 @@ def run_replay(
     storage = Storage(db_path)
     tracer = Tracer(traces_dir, run_id)
     ocr_router = OCRRouter()
+    fault_injector = FaultInjector(enabled=True) if fault_injection else None
 
     # Determine planner: use provided planner, configure Ollama, or use fallback
     if planner is None:
@@ -155,6 +158,7 @@ def run_replay(
         per_item_usd=0.10,
         per_run_usd=per_run_budget,
         fixture_root=str(fixtures_dir),
+        fault_injector=fault_injector,
     )
 
     raw_items = load_replay_fixtures(fixtures_dir)
@@ -166,7 +170,7 @@ def run_replay(
     total_cost = 0.0
 
     with tracer:
-        for raw in items_to_process:
+        for idx, raw in enumerate(items_to_process):
             item_id = raw.get("item_id", f"item_{uuid.uuid4().hex[:6]}")
             title = raw.get("title", "Untitled Notice")
             body = raw.get("body")
@@ -174,6 +178,28 @@ def run_replay(
             url = raw.get("url", f"https://example.com/notices/{item_id}")
 
             content_hash = SourceItem.compute_content_hash(title, body)
+
+            # Skip already completed items only when content hash is unchanged
+            existing_item = storage.get_item(item_id)
+            if existing_item and existing_item.status == ItemStatus.COMPLETED and existing_item.content_hash == content_hash:
+                existing_proposal = storage.get_alert_proposal_for_item_or_cluster(item_id)
+                cluster = storage.get_item_cluster(item_id)
+                cluster_id = cluster.cluster_id if cluster else None
+
+                cached_res = ItemProcessingResult(
+                    item_id=item_id,
+                    status=ItemStatus.COMPLETED,
+                    steps_taken=0,
+                    completed_tools=[],
+                    alert_proposal=existing_proposal,
+                    cluster_id=cluster_id,
+                    fallback_used=False,
+                    cost_usd=0.0,
+                    total_latency_ms=0.0,
+                )
+                results.append(cached_res)
+                continue
+
             item = SourceItem(
                 item_id=item_id,
                 source=source,
@@ -202,7 +228,7 @@ def run_replay(
                 storage.save_attachment(att)
 
             # Execute through AgentController
-            res = controller.process_item(item, attachments=attachments)
+            res = controller.process_item(item, attachments=attachments, item_index=idx)
             results.append(res)
             total_cost += res.cost_usd
 

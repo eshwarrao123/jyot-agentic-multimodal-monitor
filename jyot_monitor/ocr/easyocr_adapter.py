@@ -32,14 +32,14 @@ def get_easyocr_reader(languages: List[str], gpu: bool = False) -> Any:
     """
     Get or lazily initialize an EasyOCR Reader instance.
     Uses cached instances to avoid reloading multi-hundred-MB PyTorch weights.
+
+    Note: invoke this project with `python -E` to prevent cross-version
+    site-package collisions; sys.path must not be mutated at import time.
     """
     key = tuple(sorted(languages))
     with _READER_LOCK:
         if key not in _READER_CACHE:
             try:
-                import sys
-                _curr_ver = f"python{sys.version_info.major}{sys.version_info.minor}"
-                sys.path = [p for p in sys.path if not ("python3" in p.lower() and _curr_ver not in p.lower())]
                 import easyocr
             except ImportError as ie:
                 raise EasyOCRNotAvailableError(

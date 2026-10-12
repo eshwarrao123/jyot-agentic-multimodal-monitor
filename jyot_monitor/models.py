@@ -251,6 +251,9 @@ class TraceEvent(BaseModel):
     cache_hit: bool = False
     prompt_version: Optional[str] = Field(None, description="SHA-256 of prompt")
     model: Optional[str] = Field(None, description="Model name or 'fallback'")
+    fault_injected: Optional[str] = Field(None, description="Fault scenario name if simulated")
+    fault_recovery_outcome: Optional[str] = Field(None, description="Recovery outcome for injected fault")
+    attempt_count: Optional[int] = Field(None, description="Attempt count for operation/retry")
 
     def to_jsonl_line(self) -> str:
         """Serialize to compact JSONL line."""

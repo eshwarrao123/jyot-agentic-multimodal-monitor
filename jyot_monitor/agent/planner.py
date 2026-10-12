@@ -7,7 +7,9 @@ Implements:
 3. DeterministicFallbackPlanner: Explicit fallback when LLM is unavailable.
 """
 
+import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from jyot_monitor.llm.client import BaseLLMClient, LLMResponse
@@ -17,6 +19,28 @@ from jyot_monitor.models import (
     SourceItem,
     ToolName,
 )
+
+
+# Devanagari Unicode range: \u0900-\u097F
+DEVANAGARI_REGEX = re.compile(r"[\u0900-\u097F]")
+
+
+def contains_devanagari(text: str) -> bool:
+    """Check if string contains any Devanagari script characters."""
+    return bool(DEVANAGARI_REGEX.search(text))
+
+
+def detect_language_hint(item: SourceItem, ocr_text: str = "") -> str:
+    """
+    Detect appropriate language hint from item content.
+    
+    Checks for Devanagari script in title, body, or OCR text.
+    Returns 'hi' for Hindi/Devanagari content, 'en' otherwise.
+    """
+    full_text = f"{item.title}\n{item.body or ''}\n{ocr_text}"
+    if contains_devanagari(full_text):
+        return "hi"
+    return "en"
 
 
 def load_prompt_template(filename: str) -> str:
@@ -66,11 +90,13 @@ class DeterministicFallbackPlanner:
             (attachments and getattr(attachments[0], "local_path", None))
         )
         if has_attachment_path and ToolName.OCR_EXTRACT.value not in completed_tools:
+            # Detect language hint from item content
+            lang_hint = detect_language_hint(item)
             return (
                 ActionRequest(
                     action=ToolName.OCR_EXTRACT,
                     rationale="Visual/PDF attachment available; extracting text via multi-engine OCR router.",
-                    arguments={"language_hint": "hi" if "hi" in item.title.lower() else "en"},
+                    arguments={"language_hint": lang_hint},
                 ),
                 PlannerMode.FALLBACK,
                 True,
@@ -225,7 +251,9 @@ class LLMPlanner:
             completed_data.get("fetch_attachment", {}).get("local_path")
         )
         if has_attachment_path and "ocr_extract" not in completed_tools_set:
-            candidates.append('- ocr_extract: Extract text from visual attachment via OCR router (arguments: {"language_hint": "en"})')
+            # Detect language hint from item content
+            lang_hint = detect_language_hint(item)
+            candidates.append(f'- ocr_extract: Extract text from visual attachment via OCR router (arguments: {{"language_hint": "{lang_hint}"}})')
 
         ocr_res = completed_data.get("ocr_extract", {})
         if ocr_res.get("needs_second_opinion") and "vision_describe" not in completed_tools_set:
@@ -275,14 +303,47 @@ class LLMPlanner:
             body=(item.body or "No body text provided")[:500],
         )
 
+        # Fault injection check for malformed JSON
+        fault_injector = context.get("fault_injector")
+        item_index = context.get("item_index", 0)
+        inject_malformed = bool(fault_injector and fault_injector.should_inject("malformed_json", item_index))
+        if inject_malformed:
+            fault_injector.record_fault("malformed_json", item_index, "Simulated malformed LLM JSON output", recovered=True, outcome_message="Recovered via bounded retries and fallback")
+
+        # Check LLM response cache
+        storage = context.get("storage")
+        model_name = getattr(self.llm_client, "model", "qwen2.5:3b")
+        prompt_bytes = (self.system_prompt + "\n---\n" + user_prompt).encode("utf-8")
+        input_hash = hashlib.sha256(prompt_bytes).hexdigest()
+
+        if storage and not inject_malformed:
+            cached = storage.get_llm_cache(input_hash, model_name)
+            if cached and cached.get("response_json"):
+                try:
+                    parsed = json.loads(cached["response_json"])
+                    action_req = ActionRequest.model_validate(parsed)
+                    context["cache_hit"] = True
+                    return (
+                        action_req,
+                        PlannerMode.LLM,
+                        False,
+                        f"LLM decision (cached {model_name}): {action_req.rationale}",
+                    )
+                except Exception:
+                    pass
+
         last_error = None
         for attempt in range(self.max_retries):
-            resp: LLMResponse = self.llm_client.generate(
-                prompt=user_prompt,
-                system=self.system_prompt,
-                json_format=True,
-                temperature=0.0,
-            )
+            if inject_malformed:
+                # Simulated unparseable JSON
+                resp = LLMResponse(content='{"action": "malformed_json, invalid_syntax...', error=None)
+            else:
+                resp = self.llm_client.generate(
+                    prompt=user_prompt,
+                    system=self.system_prompt,
+                    json_format=True,
+                    temperature=0.0,
+                )
 
             # Record token usage into context for budgeting
             if resp.tokens_in is not None:
@@ -301,6 +362,20 @@ class LLMPlanner:
             if resp.parsed_json:
                 try:
                     action_req = ActionRequest.model_validate(resp.parsed_json)
+                    # Cache successful LLM decision
+                    if storage:
+                        try:
+                            storage.save_llm_cache(
+                                input_hash=input_hash,
+                                model=model_name,
+                                response_json=json.dumps(resp.parsed_json),
+                                prompt_version=input_hash[:16],
+                                tokens_in=resp.tokens_in,
+                                tokens_out=resp.tokens_out,
+                            )
+                        except Exception:
+                            pass
+
                     return (
                         action_req,
                         PlannerMode.LLM,

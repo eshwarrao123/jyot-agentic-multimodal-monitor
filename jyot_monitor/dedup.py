@@ -49,6 +49,10 @@ def compute_image_dhash(image_input: Union[Image.Image, str, Path], hash_size: i
     return hex_str
 
 
+# Alias for compute_image_dhash to ensure backwards and evaluation compatibility
+compute_dhash = compute_image_dhash
+
+
 def hamming_distance(hash1: str, hash2: str) -> int:
     """
     Compute Hamming bit distance between two hexadecimal hashes.
@@ -238,42 +242,44 @@ class StoryClusterManager:
             other_ocr = feat.get("ocr_text", "")
 
             # Check false-merge guard
-            combined_self = f"{item_text} {ocr_text or ''}"
-            combined_other = f"{other_text} {other_ocr or ''}"
+            combined_self = f"{item_text} {ocr_text or ''}".strip()
+            combined_other = f"{other_text} {other_ocr or ''}".strip()
             if are_unrelated_notices(combined_self, combined_other):
                 continue
+
+            generic_words = {"recall", "recalls", "recalled", "safety", "hazard", "warning", "notice", "alert", "cpsc", "fda", "product", "immediate", "immediately", "consumer", "000"}
+            s1 = normalize_text_tokens(combined_self) - generic_words
+            s2 = normalize_text_tokens(combined_other) - generic_words
+            common_sub = len(s1 & s2)
+            sub_jacc = len(s1 & s2) / len(s1 | s2) if (s1 | s2) else 0.0
 
             # Technique A: Image Perceptual Hash
             if image_phash and other_phash:
                 h_dist = hamming_distance(image_phash, other_phash)
                 if h_dist <= self.image_hamming_threshold:
-                    sim = 1.0 - (h_dist / 64.0)
-                    if sim > best_score:
-                        best_score = sim
-                        best_match_cluster = other_cluster
-                        best_match_type = f"image_phash_hamming_{h_dist}"
+                    # Require minimum substantive consistency so unrelated synthetic flyers sharing a template are not falsely merged
+                    if common_sub >= 2 and sub_jacc >= 0.15:
+                        sim = 1.0 - (h_dist / 64.0)
+                        if sim > best_score:
+                            best_score = sim
+                            best_match_cluster = other_cluster
+                            best_match_type = f"image_phash_hamming_{h_dist}"
 
             # Technique B: Text Near-Duplicate
-            text_sim = compute_text_jaccard(item_text, other_text)
-            if text_sim >= self.text_jaccard_threshold and text_sim > best_score:
-                best_score = text_sim
+            text_sim = compute_text_jaccard(combined_self, combined_other)
+            cont = max(compute_text_containment(combined_self, combined_other), compute_text_containment(combined_other, combined_self))
+            if (common_sub >= 3 and (text_sim >= 0.25 or cont >= 0.45 or sub_jacc >= 0.20)) and text_sim > best_score:
+                best_score = max(text_sim, sub_jacc)
                 best_match_cluster = other_cluster
-                best_match_type = "text_jaccard_near_duplicate"
+                best_match_type = "text_near_duplicate"
 
             # Technique C: Cross-Modal Matching (OCR text vs other text body, or self body vs other OCR)
-            if ocr_text and other_text:
-                cross_sim = compute_text_jaccard(ocr_text, other_text)
-                if cross_sim >= self.cross_modal_threshold and cross_sim > best_score:
+            if (ocr_text or other_ocr) and common_sub >= 2:
+                cross_sim = compute_cross_modal_similarity(combined_self, combined_other)
+                if (cross_sim >= 0.35 or sub_jacc >= 0.25) and cross_sim > best_score:
                     best_score = cross_sim
                     best_match_cluster = other_cluster
-                    best_match_type = "cross_modal_ocr_to_text"
-            
-            if item_text and other_ocr:
-                cross_sim2 = compute_text_jaccard(item_text, other_ocr)
-                if cross_sim2 >= self.cross_modal_threshold and cross_sim2 > best_score:
-                    best_score = cross_sim2
-                    best_match_cluster = other_cluster
-                    best_match_type = "cross_modal_text_to_ocr"
+                    best_match_type = "cross_modal_match"
 
         # If a match was found, join existing cluster
         if best_match_cluster:

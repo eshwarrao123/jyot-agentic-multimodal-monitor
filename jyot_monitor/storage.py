@@ -226,6 +226,18 @@ class Storage:
                 CREATE INDEX IF NOT EXISTS idx_alert_proposals_status 
                 ON alert_proposals(status)
             """)
+
+            # Emitted alerts after explicit human approval
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS emitted_alerts (
+                    emission_id TEXT PRIMARY KEY,
+                    proposal_id TEXT UNIQUE NOT NULL,
+                    item_id TEXT NOT NULL,
+                    emitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    alert_payload_json TEXT NOT NULL,
+                    FOREIGN KEY (proposal_id) REFERENCES alert_proposals(proposal_id)
+                )
+            """)
             
             # Item features and reporting state for persistent memory & search
             cursor.execute("""
@@ -236,6 +248,8 @@ class Storage:
                     taxonomy TEXT,
                     relevance_score REAL,
                     urgency_score REAL,
+                    post_critique_urgency REAL,
+                    verification_status TEXT,
                     reporting_status TEXT DEFAULT 'new',
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (item_id) REFERENCES items(item_id)
@@ -245,6 +259,27 @@ class Storage:
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_features_phash 
                 ON item_features(image_phash)
+            """)
+
+            # Schema migration for existing databases: ensure post_critique_urgency and verification_status columns
+            cursor.execute("PRAGMA table_info(item_features)")
+            feature_cols = [row[1] for row in cursor.fetchall()]
+            if "post_critique_urgency" not in feature_cols:
+                cursor.execute("ALTER TABLE item_features ADD COLUMN post_critique_urgency REAL")
+            if "verification_status" not in feature_cols:
+                cursor.execute("ALTER TABLE item_features ADD COLUMN verification_status TEXT")
+
+            # Deduplicate any existing duplicate proposals before creating unique index
+            cursor.execute("""
+                DELETE FROM alert_proposals 
+                WHERE rowid NOT IN (
+                    SELECT MIN(rowid) FROM alert_proposals GROUP BY item_id
+                )
+            """)
+
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_proposals_item_id 
+                ON alert_proposals(item_id)
             """)
 
             # Mark schema as initialized
@@ -269,6 +304,9 @@ class Storage:
                     fetch_time, status, error_code, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(item_id) DO UPDATE SET
+                    title = excluded.title,
+                    body = excluded.body,
+                    content_hash = excluded.content_hash,
                     status = excluded.status,
                     error_code = excluded.error_code,
                     updated_at = CURRENT_TIMESTAMP
@@ -367,7 +405,7 @@ class Storage:
             ))
     
     def save_alert_proposal(self, proposal: AlertProposal) -> None:
-        """Save a new alert proposal."""
+        """Save a new alert proposal (idempotent)."""
         with self.connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -375,6 +413,10 @@ class Storage:
                     proposal_id, item_id, urgency, evidence_json,
                     status, created_time
                 ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_id) DO UPDATE SET
+                    urgency = excluded.urgency,
+                    evidence_json = excluded.evidence_json
+                WHERE alert_proposals.status = 'pending'
             """, (
                 proposal.proposal_id,
                 proposal.item_id,
@@ -383,6 +425,32 @@ class Storage:
                 proposal.status.value,
                 proposal.created_time
             ))
+
+    def get_alert_proposal_for_item_or_cluster(self, item_id: str) -> Optional[AlertProposal]:
+        """Fetch existing alert proposal for an item or any member of its story cluster."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            # 1. Check item itself
+            cursor.execute("""
+                SELECT proposal_id FROM alert_proposals WHERE item_id = ? LIMIT 1
+            """, (item_id,))
+            row = cursor.fetchone()
+            if row:
+                return self.get_alert_proposal(row['proposal_id'])
+
+            # 2. Check cluster members
+            cluster = self.get_item_cluster(item_id)
+            if cluster and cluster.member_item_ids:
+                placeholders = ",".join("?" for _ in cluster.member_item_ids)
+                cursor.execute(f"""
+                    SELECT proposal_id FROM alert_proposals 
+                    WHERE item_id IN ({placeholders}) LIMIT 1
+                """, tuple(cluster.member_item_ids))
+                row = cursor.fetchone()
+                if row:
+                    return self.get_alert_proposal(row['proposal_id'])
+
+            return None
     
     def update_proposal_status(
         self,
@@ -474,6 +542,11 @@ class Storage:
             ))
 
             for member_id in cluster.member_item_ids:
+                # Remove stale membership in competing clusters to ensure consistency
+                cursor.execute("""
+                    DELETE FROM cluster_members 
+                    WHERE item_id = ? AND cluster_id != ?
+                """, (member_id, cluster.cluster_id))
                 sim_score = cluster.similarity_evidence.get(member_id, {}).get("score", 1.0) if isinstance(cluster.similarity_evidence.get(member_id), dict) else 1.0
                 cursor.execute("""
                     INSERT INTO cluster_members (cluster_id, item_id, similarity_score, join_time)
@@ -546,27 +619,33 @@ class Storage:
         taxonomy: Optional[str] = None,
         relevance_score: Optional[float] = None,
         urgency_score: Optional[float] = None,
+        post_critique_urgency: Optional[float] = None,
+        verification_status: Optional[str] = None,
         reporting_status: str = "new",
     ) -> None:
-        """Save or update extracted item features for memory search."""
+        """Save or update extracted item features for memory search and digest generation."""
         with self.connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO item_features (
                     item_id, image_phash, ocr_text, taxonomy,
-                    relevance_score, urgency_score, reporting_status, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    relevance_score, urgency_score, post_critique_urgency, verification_status,
+                    reporting_status, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(item_id) DO UPDATE SET
                     image_phash = COALESCE(excluded.image_phash, item_features.image_phash),
                     ocr_text = COALESCE(excluded.ocr_text, item_features.ocr_text),
                     taxonomy = COALESCE(excluded.taxonomy, item_features.taxonomy),
                     relevance_score = COALESCE(excluded.relevance_score, item_features.relevance_score),
                     urgency_score = COALESCE(excluded.urgency_score, item_features.urgency_score),
+                    post_critique_urgency = COALESCE(excluded.post_critique_urgency, item_features.post_critique_urgency),
+                    verification_status = COALESCE(excluded.verification_status, item_features.verification_status),
                     reporting_status = excluded.reporting_status,
                     updated_at = CURRENT_TIMESTAMP
             """, (
                 item_id, image_phash, ocr_text, taxonomy,
-                relevance_score, urgency_score, reporting_status
+                relevance_score, urgency_score, post_critique_urgency, verification_status,
+                reporting_status
             ))
 
     def get_item_features(self, item_id: str) -> Optional[Dict[str, Any]]:
@@ -575,7 +654,8 @@ class Storage:
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT item_id, image_phash, ocr_text, taxonomy,
-                       relevance_score, urgency_score, reporting_status, updated_at
+                       relevance_score, urgency_score, post_critique_urgency, verification_status,
+                       reporting_status, updated_at
                 FROM item_features WHERE item_id = ?
             """, (item_id,))
             row = cursor.fetchone()
@@ -589,7 +669,8 @@ class Storage:
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT f.item_id, f.image_phash, f.ocr_text, f.taxonomy,
-                       f.relevance_score, f.urgency_score, f.reporting_status,
+                       f.relevance_score, f.urgency_score, f.post_critique_urgency, f.verification_status,
+                       f.reporting_status,
                        i.title, i.body, i.source, i.url, i.content_hash
                 FROM item_features f
                 JOIN items i ON f.item_id = i.item_id
@@ -677,3 +758,124 @@ class Storage:
             if not row:
                 return None
             return dict(row)
+
+    # --- Feed State Operations ---
+
+    def save_feed_state(
+        self,
+        feed_name: str,
+        last_cursor: Optional[str] = None,
+        item_count: int = 0,
+    ) -> None:
+        """Save or update feed cursor state for incremental ingestion."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO feed_state (feed_name, last_cursor, last_poll_time, item_count)
+                VALUES (?, ?, CURRENT_TIMESTAMP, ?)
+                ON CONFLICT(feed_name) DO UPDATE SET
+                    last_cursor = COALESCE(excluded.last_cursor, feed_state.last_cursor),
+                    last_poll_time = CURRENT_TIMESTAMP,
+                    item_count = excluded.item_count
+            """, (feed_name, last_cursor, item_count))
+
+    def get_feed_state(self, feed_name: str) -> Optional[Dict[str, Any]]:
+        """Retrieve persistent feed cursor state."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT feed_name, last_cursor, last_poll_time, item_count
+                FROM feed_state WHERE feed_name = ?
+            """, (feed_name,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return dict(row)
+
+    # --- Emitted Alerts Operations ---
+
+    def record_alert_emission(
+        self,
+        emission_id: str,
+        proposal_id: str,
+        item_id: str,
+        alert_payload: Dict[str, Any],
+    ) -> bool:
+        """
+        Record emitted alert after human approval.
+        Returns True if newly recorded, False if already emitted (idempotent).
+        """
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    INSERT INTO emitted_alerts (emission_id, proposal_id, item_id, emitted_at, alert_payload_json)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
+                """, (emission_id, proposal_id, item_id, json.dumps(alert_payload)))
+                return True
+            except sqlite3.IntegrityError:
+                # Already emitted for this proposal_id
+                return False
+
+    def is_alert_emitted(self, proposal_id: str) -> bool:
+        """Check if an alert proposal has already been emitted."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 1 FROM emitted_alerts WHERE proposal_id = ? LIMIT 1
+            """, (proposal_id,))
+            return cursor.fetchone() is not None
+
+    def get_emitted_alert(self, proposal_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve record of an emitted alert."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT emission_id, proposal_id, item_id, emitted_at, alert_payload_json
+                FROM emitted_alerts WHERE proposal_id = ?
+            """, (proposal_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            res = dict(row)
+            res["alert_payload"] = json.loads(res.pop("alert_payload_json"))
+            return res
+
+    def get_all_pending_alert_proposals(self) -> List[Dict[str, Any]]:
+        """Retrieve all pending alert proposals."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT proposal_id, item_id, urgency, status, evidence_json, created_time, approved_time
+                FROM alert_proposals WHERE status = 'pending' ORDER BY urgency DESC
+            """)
+            results = []
+            for row in cursor.fetchall():
+                r = dict(row)
+                if isinstance(r.get("evidence_json"), str):
+                    try:
+                        r["evidence_json"] = json.loads(r["evidence_json"])
+                    except Exception:
+                        pass
+                results.append(r)
+            return results
+
+    def get_all_emitted_alerts(self) -> List[Dict[str, Any]]:
+        """Retrieve all emitted alerts."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT emission_id, proposal_id, item_id, emitted_at, alert_payload_json
+                FROM emitted_alerts ORDER BY emitted_at DESC
+            """)
+            results = []
+            for row in cursor.fetchall():
+                r = dict(row)
+                if isinstance(r.get("alert_payload_json"), str):
+                    try:
+                        r["alert_payload"] = json.loads(r.pop("alert_payload_json"))
+                    except Exception:
+                        pass
+                results.append(r)
+            return results
+

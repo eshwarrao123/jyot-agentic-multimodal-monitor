@@ -69,6 +69,16 @@ def execute_critique_item(arguments: Dict[str, Any], context: Dict[str, Any]) ->
         critique_rationale=rationale,
     )
 
+    storage = context.get("storage")
+    if storage and item:
+        try:
+            storage.save_item_features(
+                item_id=item.item_id,
+                post_critique_urgency=c_res.post_critique_urgency,
+            )
+        except Exception:
+            pass
+
     return ToolResult(
         tool_name=ToolName.CRITIQUE_ITEM,
         status="success",

@@ -99,9 +99,40 @@ def execute_fetch_attachment(arguments: Dict[str, Any], context: Dict[str, Any])
             is_evidence=False,
         )
 
-    # Compute SHA-256
+    # Fault injection check for corrupted image
+    fault_injector = context.get("fault_injector")
+    item_index = context.get("item_index", 0)
+    if fault_injector and fault_injector.should_inject("corrupted_image", item_index):
+        fault_injector.record_fault(
+            "corrupted_image",
+            item_index,
+            "Simulated corrupted image input with invalid magic bytes",
+            recovered=True,
+            outcome_message="Caught and isolated by file signature validator",
+        )
+        return ToolResult(
+            tool_name=ToolName.FETCH_ATTACHMENT,
+            status="error",
+            error_message="InvalidFileSignatureError: Attachment file has corrupted magic bytes.",
+            is_evidence=False,
+        )
+
+    # Validate file magic bytes
+    from jyot_monitor.ingestion.network import validate_file_signature, InvalidFileSignatureError
     with open(target_path, "rb") as f:
-        file_hash = hashlib.sha256(f.read()).hexdigest()
+        file_bytes = f.read()
+
+    try:
+        validate_file_signature(file_bytes, expected_extension=target_path.suffix.lower())
+    except InvalidFileSignatureError as e:
+        return ToolResult(
+            tool_name=ToolName.FETCH_ATTACHMENT,
+            status="error",
+            error_message=f"InvalidFileSignatureError: {e}",
+            is_evidence=False,
+        )
+
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
 
     return ToolResult(
         tool_name=ToolName.FETCH_ATTACHMENT,

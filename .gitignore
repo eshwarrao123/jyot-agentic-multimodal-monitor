@@ -44,3 +44,7 @@ Thumbs.db
 
 # Confidential assignment
 source/JYOT_ASSIGNMENT_ORIGINAL.txt
+# Local-only audit scripts and generated runtime alerts
+/scratch/
+/artifacts/alerts/
+

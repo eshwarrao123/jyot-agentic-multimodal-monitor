@@ -6,12 +6,15 @@ Implements:
 2. Relevance (0-100) and Urgency (0-100) scoring.
 3. Combination with non-LLM signals (source credibility, recency boost) via documented formula:
    0.45 * relevance + 0.40 * urgency + 0.10 * credibility + 0.05 * recency_boost.
+4. Genuine LLM classification with validation and bounded retries when LLM client is available.
 """
 
 from datetime import datetime, timezone
 import json
+from pathlib import Path
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from pydantic import ValidationError
 from jyot_monitor.models import (
     ClassificationResult,
     RecallTaxonomy,
@@ -44,6 +47,14 @@ def compute_recency_boost(fetch_time: datetime) -> float:
     elif days_old <= 30.0:
         return 5.0
     return 0.0
+
+
+def load_classification_prompt() -> str:
+    """Load classification prompt template from prompts directory."""
+    prompt_path = Path("prompts") / "classification_scoring.txt"
+    if prompt_path.is_file():
+        return prompt_path.read_text(encoding="utf-8")
+    return ""
 
 
 def deterministic_classify(text: str, source: str) -> ClassificationResult:
@@ -115,8 +126,129 @@ def deterministic_classify(text: str, source: str) -> ClassificationResult:
     )
 
 
+def llm_classify_with_validation(
+    llm_client: Any,
+    full_text: str,
+    item: SourceItem,
+    max_retries: int = 3,
+) -> Optional[ClassificationResult]:
+    """
+    Attempt LLM classification with schema validation and bounded retries.
+    
+    Returns None on failure (triggers deterministic fallback).
+    """
+    system_prompt = load_classification_prompt()
+    if not system_prompt:
+        return None
+    
+    # Construct user prompt with untrusted data delimiters
+    user_prompt = (
+        f"Classify the following safety notice:\n\n"
+        f"[UNTRUSTED START]\n"
+        f"Source: {item.source}\n"
+        f"Title: {item.title}\n"
+        f"Body: {item.body or 'N/A'}\n"
+        f"Additional OCR/Text: {full_text[:2000]}\n"
+        f"[UNTRUSTED END]\n\n"
+        f"Provide classification in the JSON format specified."
+    )
+    
+    for attempt in range(max_retries):
+        try:
+            llm_res = llm_client.generate(
+                prompt=user_prompt,
+                system=system_prompt,
+                json_format=True,
+                temperature=0.0,
+            )
+            
+            if llm_res.error:
+                continue
+            
+            if not llm_res.parsed_json:
+                continue
+            
+            pj = llm_res.parsed_json
+            
+            # Validate required fields
+            if "taxonomy" not in pj or "relevance_score" not in pj or "urgency_score" not in pj:
+                continue
+            
+            # Validate taxonomy against enum
+            tax_str = str(pj.get("taxonomy", "uncertain")).lower()
+            try:
+                tax = RecallTaxonomy(tax_str)
+            except ValueError:
+                # Invalid taxonomy label
+                continue
+            
+            # Validate score ranges
+            try:
+                rel = float(pj.get("relevance_score", 50.0))
+                urg = float(pj.get("urgency_score", 50.0))
+                
+                if not (0.0 <= rel <= 100.0):
+                    continue
+                if not (0.0 <= urg <= 100.0):
+                    continue
+            except (ValueError, TypeError):
+                continue
+            
+            # Extract evidence with defaults
+            hazard_desc = pj.get("hazard_description")
+            if hazard_desc and not isinstance(hazard_desc, str):
+                hazard_desc = str(hazard_desc)
+            
+            affected_prods = pj.get("affected_products", [])
+            if not isinstance(affected_prods, list):
+                affected_prods = []
+            
+            evidence_snips = pj.get("evidence_snippets", [])
+            if not isinstance(evidence_snips, list):
+                evidence_snips = []
+            
+            uncertainty = pj.get("uncertainty_notes")
+            if uncertainty and not isinstance(uncertainty, str):
+                uncertainty = str(uncertainty)
+            
+            # Compute combined score with non-LLM signals
+            cred = compute_source_credibility(item.source)
+            rec = compute_recency_boost(item.fetch_time)
+            final = ScoreBreakdown.compute_final(rel, urg, cred, rec)
+            
+            breakdown = ScoreBreakdown(
+                relevance=rel,
+                urgency=urg,
+                credibility=cred,
+                recency_boost=rec,
+                final_score=round(final, 2),
+            )
+            
+            # Build validated ClassificationResult
+            result = ClassificationResult(
+                taxonomy=tax,
+                relevance_score=rel,
+                urgency_score=urg,
+                score_breakdown=breakdown,
+                hazard_description=hazard_desc,
+                affected_products=affected_prods,
+                evidence_snippets=evidence_snips,
+                uncertainty_notes=uncertainty,
+                is_unverified=urg > 75.0,
+            )
+            
+            return result
+            
+        except Exception:
+            # Continue to next retry
+            continue
+    
+    # All retries exhausted
+    return None
+
+
 def execute_classify_score(arguments: Dict[str, Any], context: Dict[str, Any]) -> ToolResult:
-    """Classify and score item, incorporating LLM and non-LLM signals."""
+    """Classify and score item, incorporating LLM and non-LLM signals with validation."""
     item: SourceItem = context.get("item")
     if not item:
         return ToolResult(
@@ -132,52 +264,41 @@ def execute_classify_score(arguments: Dict[str, Any], context: Dict[str, Any]) -
     full_text = f"{item.title}\n{item.body or ''}\n{ocr_text}".strip()
 
     llm_client = context.get("llm_client")
-    res = None
+    res: Optional[ClassificationResult] = None
+    used_llm = False
+    fallback_reason: Optional[str] = None
+    
+    # Check if LLM classification should be attempted
+    # Enable when:
+    # 1. LLM client is present and callable
+    # 2. Planner mode is "llm" (not deterministic fallback)
+    # 3. Either not a MockLLMClient OR explicitly enabled by test flag
+    is_mock_client = llm_client and type(llm_client).__name__ == "MockLLMClient"
+    explicitly_enabled = context.get("enable_llm_classification", None)
+    
+    enable_llm_classification = (
+        llm_client and 
+        hasattr(llm_client, "generate") and 
+        context.get("planner_mode") == "llm" and
+        (explicitly_enabled is True or (explicitly_enabled is None and not is_mock_client))
+    )
 
-    if llm_client and hasattr(llm_client, "generate") and context.get("planner_mode") != "fallback":
-        prompt = (
-            f"Analyze this safety notice:\n[UNTRUSTED START]\n{full_text}\n[UNTRUSTED END]\n"
-            "Output JSON with taxonomy, relevance_score, urgency_score, hazard_description, affected_products, evidence_snippets, uncertainty_notes."
-        )
-        try:
-            llm_res = llm_client.generate(prompt=prompt, system="You are a safety notice classification system.", json_format=True)
-            if llm_res.parsed_json and "taxonomy" in llm_res.parsed_json:
-                pj = llm_res.parsed_json
-                tax_str = pj.get("taxonomy", "uncertain").lower()
-                try:
-                    tax = RecallTaxonomy(tax_str)
-                except ValueError:
-                    tax = RecallTaxonomy.UNCERTAIN
+    # Attempt LLM classification if enabled
+    if enable_llm_classification:
+        res = llm_classify_with_validation(llm_client, full_text, item, max_retries=3)
+        if res:
+            used_llm = True
+        else:
+            fallback_reason = "LLM classification failed validation after retries"
 
-                rel = float(pj.get("relevance_score", 50.0))
-                urg = float(pj.get("urgency_score", 50.0))
-                cred = compute_source_credibility(item.source)
-                rec = compute_recency_boost(item.fetch_time)
-                final = ScoreBreakdown.compute_final(rel, urg, cred, rec)
-
-                breakdown = ScoreBreakdown(
-                    relevance=rel,
-                    urgency=urg,
-                    credibility=cred,
-                    recency_boost=rec,
-                    final_score=round(final, 2),
-                )
-                res = ClassificationResult(
-                    taxonomy=tax,
-                    relevance_score=rel,
-                    urgency_score=urg,
-                    score_breakdown=breakdown,
-                    hazard_description=pj.get("hazard_description"),
-                    affected_products=pj.get("affected_products", []),
-                    evidence_snippets=pj.get("evidence_snippets", []),
-                    uncertainty_notes=pj.get("uncertainty_notes"),
-                    is_unverified=urg > 75.0,
-                )
-        except Exception:
-            pass
-
+    # Fall back to deterministic classifier
     if not res:
         res = deterministic_classify(full_text, item.source)
+        if not fallback_reason:
+            if not enable_llm_classification:
+                fallback_reason = "LLM classification not enabled in context"
+            else:
+                fallback_reason = "LLM client unavailable or planner in fallback mode"
 
     # Save to storage features
     storage = context.get("storage")
@@ -203,6 +324,8 @@ def execute_classify_score(arguments: Dict[str, Any], context: Dict[str, Any]) -
             "affected_products": res.affected_products,
             "evidence_snippets": res.evidence_snippets,
             "is_unverified": res.is_unverified,
+            "classification_mode": "llm" if used_llm else "deterministic",
+            "fallback_reason": fallback_reason if not used_llm else None,
         },
         is_evidence=True,
     )

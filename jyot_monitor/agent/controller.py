@@ -10,6 +10,7 @@ Orchestrates:
 6. Safe, untrusted-data boundary protection.
 """
 
+import os
 from datetime import datetime, timezone
 import time
 from typing import Any, Dict, List, Optional
@@ -34,12 +35,29 @@ from jyot_monitor.models import (
     utc_now,
 )
 from jyot_monitor.ocr.router import OCRRouter
+from jyot_monitor.safety.redaction import redact_text
 from jyot_monitor.storage import Storage
 from jyot_monitor.trace import Tracer
 
 
+# Build the set of path prefixes that should be stripped from traces at startup
+# so the list does not change between calls.
+_HOME_DIR = str(Path.home()).replace("\\", "/")
+_CWD = str(Path(os.getcwd()).resolve()).replace("\\", "/")
+_PATH_PREFIXES_TO_SCRUB = [p for p in [_HOME_DIR, _CWD] if p]
+
+
+def _scrub_machine_paths(value: str) -> str:
+    """Replace absolute machine-specific path prefixes with a portable token."""
+    norm = value.replace("\\", "/")
+    for prefix in _PATH_PREFIXES_TO_SCRUB:
+        if norm.startswith(prefix):
+            return "<project-path>/" + norm[len(prefix):].lstrip("/")
+    return value
+
+
 def sanitize_summary(data: Any, max_len: int = 250) -> Any:
-    """Recursively redact secrets and truncate large string fields for safe tracing."""
+    """Recursively redact secrets, contact PII, machine paths and truncate large string fields for safe tracing."""
     if isinstance(data, dict):
         sanitized = {}
         for k, v in data.items():
@@ -52,9 +70,11 @@ def sanitize_summary(data: Any, max_len: int = 250) -> Any:
     elif isinstance(data, list):
         return [sanitize_summary(x, max_len) for x in data[:10]]
     elif isinstance(data, str):
-        if len(data) > max_len:
-            return data[:max_len] + "... [truncated]"
-        return data
+        redacted = redact_text(data)
+        redacted = _scrub_machine_paths(redacted)
+        if len(redacted) > max_len:
+            return redacted[:max_len] + "... [truncated]"
+        return redacted
     elif isinstance(data, (int, float, bool)) or data is None:
         return data
     return str(data)[:max_len]
@@ -82,6 +102,7 @@ class AgentController:
         urgency_critique_threshold: float = 75.0,
         urgency_alert_threshold: float = 85.0,
         fixture_root: str = "fixtures",
+        fault_injector: Optional[Any] = None,
     ):
         self.planner = planner or DeterministicFallbackPlanner()
         self.tool_registry = tool_registry or get_default_tool_registry()
@@ -95,11 +116,13 @@ class AgentController:
         self.urgency_critique_threshold = urgency_critique_threshold
         self.urgency_alert_threshold = urgency_alert_threshold
         self.fixture_root = fixture_root
+        self.fault_injector = fault_injector
 
     def process_item(
         self,
         item: SourceItem,
         attachments: Optional[List[Any]] = None,
+        item_index: int = 0,
     ) -> ItemProcessingResult:
         """
         Process a single item through the bounded agent loop.
@@ -114,6 +137,7 @@ class AgentController:
         attachments = attachments or []
         completed_tools: List[ToolName] = []
         completed_tool_data: Dict[str, Any] = {}
+        failed_tools: List[ToolName] = []
         item_cost_used = 0.0
         total_tokens_in = 0
         total_tokens_out = 0
@@ -122,14 +146,22 @@ class AgentController:
         final_status = ItemStatus.IN_PROGRESS
         error_msg: Optional[str] = None
 
+        # Extract LLM client from planner if available for tool use
+        llm_client = getattr(self.planner, "llm_client", None) if hasattr(self.planner, "llm_client") else None
+        planner_mode_str = "llm" if llm_client and not isinstance(self.planner, DeterministicFallbackPlanner) else "fallback"
+        
         context: Dict[str, Any] = {
             "run_id": self.run_id,
             "item_id": item.item_id,
+            "item_index": item_index,
             "item": item,
             "attachments": attachments,
             "fixture_root": self.fixture_root,
             "storage": self.storage,
             "ocr_router": self.ocr_router,
+            "llm_client": llm_client,
+            "planner_mode": planner_mode_str,
+            "fault_injector": self.fault_injector,
             "completed_tools": completed_tools,
             "completed_tool_data": completed_tool_data,
             "steps_remaining": self.max_steps_per_item,
@@ -139,8 +171,11 @@ class AgentController:
             "urgency_alert_threshold": self.urgency_alert_threshold,
         }
 
+        steps_executed = 0
+
         # Step loop
         for step_index in range(self.max_steps_per_item):
+            steps_executed += 1
             # Budget check before next step
             if context["item_budget_usd"] <= 0.0 or self.per_run_usd_remaining <= 0.0:
                 final_status = ItemStatus.PARTIAL
@@ -198,36 +233,19 @@ class AgentController:
                 context["item_budget_usd"] = max(0.0, context["item_budget_usd"] - step_cost)
                 context["run_budget_usd"] = self.per_run_usd_remaining
 
-            # Check if planner chose FINISH
-            if action_req.action == ToolName.FINISH:
-                step_latency_ms = (time.perf_counter() - step_start) * 1000.0
-                total_latency_ms += step_latency_ms
-                final_status = ItemStatus.COMPLETED
-
-                self._emit_trace_event(
-                    item=item,
-                    step_index=step_index,
-                    planner_mode=planner_mode,
-                    tool=ToolName.FINISH,
-                    arguments=action_req.arguments,
-                    result={"finished": True},
-                    rationale=rationale or action_req.rationale,
-                    status=ItemStatus.COMPLETED,
-                    fallback_used=fallback_used,
-                    context=context,
-                    latency_ms=step_latency_ms,
-                    tokens_in=tok_in if tok_in > 0 else None,
-                    tokens_out=tok_out if tok_out > 0 else None,
-                    cost_usd=step_cost if step_cost > 0 else None,
-                )
-                break
-
-            # Security check: Validate tool name against registered allow-list
-            if not self.tool_registry.is_allowed(action_req.action.value):
+            # Candidate action validation: validate against permitted actions for current state
+            is_valid, validation_err = self._validate_candidate_action(
+                action_req=action_req,
+                item=item,
+                context=context,
+            )
+            if not is_valid:
                 step_latency_ms = (time.perf_counter() - step_start) * 1000.0
                 total_latency_ms += step_latency_ms
                 final_status = ItemStatus.PARTIAL
-                error_msg = f"DisallowedToolError: Attempted call to unregistered tool '{action_req.action}'"
+                error_msg = validation_err
+                err_code = validation_err.split(":")[0] if validation_err else "DisallowedCandidateAction"
+                context["steps_remaining"] -= 1
 
                 self._emit_trace_event(
                     item=item,
@@ -241,7 +259,48 @@ class AgentController:
                     fallback_used=fallback_used,
                     context=context,
                     latency_ms=step_latency_ms,
-                    error_code="DisallowedToolError",
+                    error_code=err_code,
+                )
+                continue
+
+            # Check if planner chose FINISH
+            if action_req.action == ToolName.FINISH:
+                step_latency_ms = (time.perf_counter() - step_start) * 1000.0
+                total_latency_ms += step_latency_ms
+
+                # Enforce requirement: A required tool failure must not be followed by a successful finish marking COMPLETED
+                has_mandatory_failure = len(failed_tools) > 0
+                missing_mandatory = []
+                if ToolName.CLASSIFY_SCORE.value not in completed_tool_data:
+                    missing_mandatory.append("classify_score")
+
+                if has_mandatory_failure or missing_mandatory:
+                    final_status = ItemStatus.PARTIAL
+                    reasons = []
+                    if failed_tools:
+                        reasons.append(f"failed tools: {[t.value for t in failed_tools]}")
+                    if missing_mandatory:
+                        reasons.append(f"unresolved mandatory stages: {missing_mandatory}")
+                    error_msg = f"IncompleteProcessingError: Finish attempted but {'; '.join(reasons)}"
+                else:
+                    final_status = ItemStatus.COMPLETED
+
+                self._emit_trace_event(
+                    item=item,
+                    step_index=step_index,
+                    planner_mode=planner_mode,
+                    tool=ToolName.FINISH,
+                    arguments=action_req.arguments,
+                    result={"finished": True, "final_status": final_status.value},
+                    rationale=rationale or action_req.rationale,
+                    status=final_status,
+                    fallback_used=fallback_used,
+                    context=context,
+                    latency_ms=step_latency_ms,
+                    tokens_in=tok_in if tok_in > 0 else None,
+                    tokens_out=tok_out if tok_out > 0 else None,
+                    cost_usd=step_cost if step_cost > 0 else None,
+                    error_code="IncompleteProcessingError" if final_status != ItemStatus.COMPLETED else None,
                 )
                 break
 
@@ -264,6 +323,7 @@ class AgentController:
             step_status = ItemStatus.IN_PROGRESS if tool_result.status == "success" else ItemStatus.PARTIAL
             if tool_result.status == "error":
                 error_msg = tool_result.error_message
+                failed_tools.append(action_req.action)
 
             self._emit_trace_event(
                 item=item,
@@ -285,7 +345,10 @@ class AgentController:
         else:
             # Reached max_steps_per_item without FINISH
             final_status = ItemStatus.PARTIAL
-            error_msg = f"Step limit ({self.max_steps_per_item}) exhausted before completion"
+            if not error_msg:
+                error_msg = f"Step limit ({self.max_steps_per_item}) exhausted before completion"
+            else:
+                error_msg = f"{error_msg}; Step limit ({self.max_steps_per_item}) exhausted before completion"
 
         # Extract structured final artifacts from completed tool data
         classification_res: Optional[ClassificationResult] = None
@@ -323,10 +386,24 @@ class AgentController:
         if "search_memory" in completed_tool_data:
             cluster_id = completed_tool_data["search_memory"].get("cluster_id")
 
+        # Persist post-critique urgency and verification status to storage
+        if self.storage:
+            try:
+                post_urg = critique_res.post_critique_urgency if critique_res else None
+                v_stat = verification_res.status.value if verification_res else None
+                if post_urg is not None or v_stat is not None:
+                    self.storage.save_item_features(
+                        item_id=item.item_id,
+                        post_critique_urgency=post_urg,
+                        verification_status=v_stat,
+                    )
+            except Exception:
+                pass
+
         return ItemProcessingResult(
             item_id=item.item_id,
             status=final_status,
-            steps_taken=len(completed_tools),
+            steps_taken=steps_executed,
             completed_tools=completed_tools,
             final_scores=classification_res,
             verification=verification_res,
@@ -340,6 +417,121 @@ class AgentController:
             cost_usd=round(item_cost_used, 6),
             total_latency_ms=round(total_latency_ms, 2),
         )
+
+    def _validate_candidate_action(
+        self,
+        action_req: ActionRequest,
+        item: SourceItem,
+        context: Dict[str, Any],
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate planner action against candidate actions currently permitted for the item's state.
+
+        Rejects:
+        - Disallowed / unregistered tools
+        - Disallowed or unexpected tool arguments
+        - Actions unsupported by current state (e.g., ocr without attachment)
+        - Premature alert proposals
+        - Repeated completed actions without an explicitly supported reason
+        """
+        tool = action_req.action
+        tool_name = tool.value if hasattr(tool, "value") else str(tool)
+
+        # 1. Allow-listed tool check
+        if not self.tool_registry.is_allowed(tool_name):
+            return False, f"DisallowedToolError: Attempted call to unregistered tool '{tool_name}'"
+
+        completed_tools: List[ToolName] = context.get("completed_tools", [])
+        completed_tool_names = [t.value if hasattr(t, "value") else str(t) for t in completed_tools]
+        completed_data: Dict[str, Any] = context.get("completed_tool_data", {})
+        attachments = context.get("attachments", [])
+        args = action_req.arguments or {}
+
+        # 2. Argument schema validation
+        allowed_args = {
+            ToolName.FETCH_ATTACHMENT.value: {"attachment_id"},
+            ToolName.OCR_EXTRACT.value: {"language_hint", "attachment_id", "retry_reason"},
+            ToolName.VISION_DESCRIBE.value: set(),
+            ToolName.CLASSIFY_SCORE.value: set(),
+            ToolName.SEARCH_MEMORY.value: set(),
+            ToolName.VERIFY_CLAIM.value: {"claim_text"},
+            ToolName.CRITIQUE_ITEM.value: set(),
+            ToolName.PROPOSE_ALERT.value: set(),
+            ToolName.FINISH.value: set(),
+        }
+
+        permitted_arg_keys = allowed_args.get(tool_name, set())
+        unauthorized_args = set(args.keys()) - permitted_arg_keys
+        if unauthorized_args:
+            return False, f"DisallowedArgumentsError: Tool '{tool_name}' received unauthorized arguments: {sorted(list(unauthorized_args))}"
+
+        # 3. Repeated completed actions check
+        if tool_name in completed_tool_names:
+            can_repeat = False
+            if tool == ToolName.OCR_EXTRACT and args.get("retry_reason"):
+                can_repeat = True
+            elif tool == ToolName.FETCH_ATTACHMENT and args.get("attachment_id"):
+                fetched_att = completed_data.get("fetch_attachment", {}).get("attachment_id")
+                if fetched_att != args.get("attachment_id"):
+                    can_repeat = True
+
+            if not can_repeat:
+                return False, f"RepeatedActionError: Tool '{tool_name}' has already completed and cannot be repeated without a supported reason"
+
+        # 4. State-dependent candidate action validation
+        if tool == ToolName.FETCH_ATTACHMENT:
+            if not attachments:
+                return False, "UnsupportedActionError: fetch_attachment requested but item has no attachments"
+
+        elif tool == ToolName.OCR_EXTRACT:
+            has_attachment_path = bool(
+                completed_data.get("fetch_attachment", {}).get("local_path") or
+                (attachments and getattr(attachments[0], "local_path", None))
+            )
+            if not has_attachment_path:
+                return False, "UnsupportedActionError: ocr_extract requested but no attachment local path is available"
+
+        elif tool == ToolName.VISION_DESCRIBE:
+            ocr_res = completed_data.get("ocr_extract", {})
+            if not ocr_res.get("needs_second_opinion"):
+                return False, "UnsupportedActionError: vision_describe requested without OCR second-opinion requirement"
+
+        elif tool == ToolName.VERIFY_CLAIM:
+            if ToolName.CLASSIFY_SCORE.value not in completed_tool_names:
+                return False, "UnsupportedActionError: verify_claim requested before classify_score"
+            urgency = float(completed_data.get("classify_score", {}).get("urgency_score", 0.0))
+            if urgency <= 75.0:
+                return False, f"UnsupportedActionError: verify_claim requested but urgency {urgency} is below threshold 75.0"
+
+        elif tool == ToolName.CRITIQUE_ITEM:
+            if ToolName.CLASSIFY_SCORE.value not in completed_tool_names:
+                return False, "UnsupportedActionError: critique_item requested before classify_score"
+            urgency = float(completed_data.get("classify_score", {}).get("urgency_score", 0.0))
+            if urgency <= 75.0:
+                return False, f"UnsupportedActionError: critique_item requested but urgency {urgency} is below threshold 75.0"
+
+        elif tool == ToolName.PROPOSE_ALERT:
+            if ToolName.CLASSIFY_SCORE.value not in completed_tool_names:
+                return False, "PrematureAlertProposalError: propose_alert requested before classify_score"
+            if ToolName.VERIFY_CLAIM.value not in completed_tool_names:
+                return False, "PrematureAlertProposalError: propose_alert requested before verify_claim"
+            if ToolName.CRITIQUE_ITEM.value not in completed_tool_names:
+                return False, "PrematureAlertProposalError: propose_alert requested before critique_item"
+
+            critique_data = completed_data.get("critique_item", {})
+            post_urgency = float(critique_data.get("post_critique_urgency", 0.0))
+            threshold = context.get("urgency_alert_threshold", self.urgency_alert_threshold)
+            if post_urgency < threshold:
+                return False, f"PrematureAlertProposalError: post-critique urgency {post_urgency} is below threshold {threshold}"
+
+            verify_data = completed_data.get("verify_claim", {})
+            if verify_data.get("status") != "supported":
+                return False, f"PrematureAlertProposalError: claim verification status is '{verify_data.get('status')}', not 'supported'"
+
+            if critique_data.get("should_propose_alert") is False:
+                return False, "PrematureAlertProposalError: critique decided item does not warrant alert proposal"
+
+        return True, None
 
     def _emit_trace_event(
         self,
@@ -371,6 +563,19 @@ class AgentController:
 
         model_name = "fallback" if fallback_used else getattr(getattr(self.planner, "llm_client", None), "model", "llm")
 
+        fault_injected = None
+        fault_recovery = None
+        attempt_count = None
+        fault_injector = context.get("fault_injector")
+        item_index = context.get("item_index", 0)
+        if fault_injector:
+            matching = [f for f in getattr(fault_injector, "triggered_faults", []) if f.target_item_index == item_index]
+            if matching:
+                latest = matching[-1]
+                fault_injected = latest.fault_type
+                fault_recovery = latest.outcome_message
+                attempt_count = latest.attempts
+
         event = TraceEvent(
             run_id=self.run_id,
             item_id=item.item_id,
@@ -390,7 +595,11 @@ class AgentController:
             fallback_used=fallback_used,
             error_code=error_code,
             budget_remaining=budget_rem,
+            cache_hit=context.pop("cache_hit", False),
             model=model_name,
+            fault_injected=fault_injected,
+            fault_recovery_outcome=fault_recovery,
+            attempt_count=attempt_count,
         )
 
         try:
