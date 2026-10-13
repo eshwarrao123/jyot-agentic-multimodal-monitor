@@ -1,0 +1,1057 @@
+{
+  "evaluation_date": "2026-10-12",
+  "total_records": 18,
+  "overall_metrics": {
+    "tesseract_original": {
+      "count": 18,
+      "mean_cer": 0.2936,
+      "median_cer": 0.0368,
+      "p95_cer": 1.0,
+      "mean_wer": 0.3604,
+      "median_wer": 0.0625,
+      "p95_wer": 1.0,
+      "failures": 2
+    },
+    "tesseract_preprocessed": {
+      "count": 18,
+      "mean_cer": 0.2512,
+      "median_cer": 0.0368,
+      "p95_cer": 1.0,
+      "mean_wer": 0.333,
+      "median_wer": 0.0789,
+      "p95_wer": 1.0,
+      "failures": 1
+    },
+    "easyocr_original": {
+      "count": 18,
+      "mean_cer": 0.149,
+      "median_cer": 0.046,
+      "p95_cer": 0.7543,
+      "mean_wer": 0.3043,
+      "median_wer": 0.0909,
+      "p95_wer": 1.0227,
+      "failures": 0
+    },
+    "easyocr_preprocessed": {
+      "count": 18,
+      "mean_cer": 0.1357,
+      "median_cer": 0.0546,
+      "p95_cer": 0.7798,
+      "mean_wer": 0.343,
+      "median_wer": 0.1905,
+      "p95_wer": 1.25,
+      "failures": 0
+    },
+    "routed_system": {
+      "count": 18,
+      "mean_cer": 0.0945,
+      "median_cer": 0.0368,
+      "p95_cer": 0.7798,
+      "mean_wer": 0.2203,
+      "median_wer": 0.0714,
+      "p95_wer": 1.25,
+      "failures": 0
+    }
+  },
+  "language_breakdowns": {
+    "tesseract_original": {
+      "en": {
+        "count": 14,
+        "mean_cer": 0.1629,
+        "median_cer": 0.0312,
+        "p95_cer": 1.0,
+        "mean_wer": 0.1909,
+        "median_wer": 0.0455,
+        "p95_wer": 1.0,
+        "failures": 2
+      },
+      "hi": {
+        "count": 4,
+        "mean_cer": 0.751,
+        "median_cer": 0.7565,
+        "p95_cer": 0.7579,
+        "mean_wer": 0.9536,
+        "median_wer": 0.9535,
+        "p95_wer": 0.9783,
+        "failures": 0
+      }
+    },
+    "tesseract_preprocessed": {
+      "en": {
+        "count": 14,
+        "mean_cer": 0.0955,
+        "median_cer": 0.0319,
+        "p95_cer": 1.0,
+        "mean_wer": 0.1441,
+        "median_wer": 0.0667,
+        "p95_wer": 1.0,
+        "failures": 1
+      },
+      "hi": {
+        "count": 4,
+        "mean_cer": 0.7961,
+        "median_cer": 0.7965,
+        "p95_cer": 0.828,
+        "mean_wer": 0.9942,
+        "median_wer": 1.0,
+        "p95_wer": 1.0,
+        "failures": 0
+      }
+    },
+    "easyocr_original": {
+      "en": {
+        "count": 14,
+        "mean_cer": 0.1482,
+        "median_cer": 0.0368,
+        "p95_cer": 0.7543,
+        "mean_wer": 0.2562,
+        "median_wer": 0.0833,
+        "p95_wer": 1.0227,
+        "failures": 0
+      },
+      "hi": {
+        "count": 4,
+        "mean_cer": 0.1518,
+        "median_cer": 0.1407,
+        "p95_cer": 0.2362,
+        "mean_wer": 0.4727,
+        "median_wer": 0.4651,
+        "p95_wer": 0.6512,
+        "failures": 0
+      }
+    },
+    "easyocr_preprocessed": {
+      "en": {
+        "count": 14,
+        "mean_cer": 0.1194,
+        "median_cer": 0.0435,
+        "p95_cer": 0.7798,
+        "mean_wer": 0.2781,
+        "median_wer": 0.1556,
+        "p95_wer": 1.25,
+        "failures": 0
+      },
+      "hi": {
+        "count": 4,
+        "mean_cer": 0.1928,
+        "median_cer": 0.2185,
+        "p95_cer": 0.2281,
+        "mean_wer": 0.5702,
+        "median_wer": 0.5814,
+        "p95_wer": 0.6279,
+        "failures": 0
+      }
+    },
+    "routed_system": {
+      "en": {
+        "count": 14,
+        "mean_cer": 0.0781,
+        "median_cer": 0.029,
+        "p95_cer": 0.7798,
+        "mean_wer": 0.1482,
+        "median_wer": 0.0455,
+        "p95_wer": 1.25,
+        "failures": 0
+      },
+      "hi": {
+        "count": 4,
+        "mean_cer": 0.1518,
+        "median_cer": 0.1407,
+        "p95_cer": 0.2362,
+        "mean_wer": 0.4727,
+        "median_wer": 0.4651,
+        "p95_wer": 0.6512,
+        "failures": 0
+      }
+    }
+  },
+  "difficulty_breakdowns": {
+    "tesseract_original": {
+      "easy": {
+        "count": 9,
+        "mean_cer": 0.1023,
+        "median_cer": 0.0258,
+        "p95_cer": 0.7579,
+        "mean_wer": 0.1377,
+        "median_wer": 0.0435,
+        "p95_wer": 0.9524,
+        "failures": 0
+      },
+      "medium": {
+        "count": 3,
+        "mean_cer": 0.5141,
+        "median_cer": 0.7491,
+        "p95_cer": 0.7565,
+        "mean_wer": 0.6513,
+        "median_wer": 0.9302,
+        "p95_wer": 0.9783,
+        "failures": 0
+      },
+      "hard": {
+        "count": 6,
+        "mean_cer": 0.4703,
+        "median_cer": 0.7407,
+        "p95_cer": 1.0,
+        "mean_wer": 0.549,
+        "median_wer": 0.9535,
+        "p95_wer": 1.0,
+        "failures": 2
+      }
+    },
+    "tesseract_preprocessed": {
+      "easy": {
+        "count": 9,
+        "mean_cer": 0.1086,
+        "median_cer": 0.0258,
+        "p95_cer": 0.7965,
+        "mean_wer": 0.1587,
+        "median_wer": 0.0625,
+        "p95_wer": 1.0,
+        "failures": 0
+      },
+      "medium": {
+        "count": 3,
+        "mean_cer": 0.5441,
+        "median_cer": 0.7675,
+        "p95_cer": 0.828,
+        "mean_wer": 0.6818,
+        "median_wer": 1.0,
+        "p95_wer": 1.0,
+        "failures": 0
+      },
+      "hard": {
+        "count": 6,
+        "mean_cer": 0.3188,
+        "median_cer": 0.0654,
+        "p95_cer": 1.0,
+        "mean_wer": 0.4202,
+        "median_wer": 0.3415,
+        "p95_wer": 1.0,
+        "failures": 1
+      }
+    },
+    "easyocr_original": {
+      "easy": {
+        "count": 9,
+        "mean_cer": 0.0374,
+        "median_cer": 0.029,
+        "p95_cer": 0.1193,
+        "mean_wer": 0.1086,
+        "median_wer": 0.0714,
+        "p95_wer": 0.4048,
+        "failures": 0
+      },
+      "medium": {
+        "count": 3,
+        "mean_cer": 0.1311,
+        "median_cer": 0.1111,
+        "p95_cer": 0.2362,
+        "mean_wer": 0.3706,
+        "median_wer": 0.3696,
+        "p95_wer": 0.6512,
+        "failures": 0
+      },
+      "hard": {
+        "count": 6,
+        "mean_cer": 0.3255,
+        "median_cer": 0.2876,
+        "p95_cer": 0.7543,
+        "mean_wer": 0.5647,
+        "median_wer": 0.8293,
+        "p95_wer": 1.0227,
+        "failures": 0
+      }
+    },
+    "easyocr_preprocessed": {
+      "easy": {
+        "count": 9,
+        "mean_cer": 0.0574,
+        "median_cer": 0.0401,
+        "p95_cer": 0.2281,
+        "mean_wer": 0.1904,
+        "median_wer": 0.1522,
+        "p95_wer": 0.5714,
+        "failures": 0
+      },
+      "medium": {
+        "count": 3,
+        "mean_cer": 0.1225,
+        "median_cer": 0.1326,
+        "p95_cer": 0.1919,
+        "mean_wer": 0.3832,
+        "median_wer": 0.5,
+        "p95_wer": 0.5814,
+        "failures": 0
+      },
+      "hard": {
+        "count": 6,
+        "mean_cer": 0.2599,
+        "median_cer": 0.2185,
+        "p95_cer": 0.7798,
+        "mean_wer": 0.5518,
+        "median_wer": 0.6279,
+        "p95_wer": 1.25,
+        "failures": 0
+      }
+    },
+    "routed_system": {
+      "easy": {
+        "count": 9,
+        "mean_cer": 0.0313,
+        "median_cer": 0.0258,
+        "p95_cer": 0.1193,
+        "mean_wer": 0.0769,
+        "median_wer": 0.0435,
+        "p95_wer": 0.4048,
+        "failures": 0
+      },
+      "medium": {
+        "count": 3,
+        "mean_cer": 0.128,
+        "median_cer": 0.1111,
+        "p95_cer": 0.2362,
+        "mean_wer": 0.3554,
+        "median_wer": 0.3696,
+        "p95_wer": 0.6512,
+        "failures": 0
+      },
+      "hard": {
+        "count": 6,
+        "mean_cer": 0.1724,
+        "median_cer": 0.0654,
+        "p95_cer": 0.7798,
+        "mean_wer": 0.3678,
+        "median_wer": 0.3415,
+        "p95_wer": 1.25,
+        "failures": 0
+      }
+    }
+  },
+  "trajectory_counts": {
+    "clean_english_direct": 10,
+    "difficult_low_confidence_second_opinion": 4,
+    "hindi_specialized_engine": 4
+  },
+  "per_record_results": [
+    {
+      "record_id": "rec_en_clean_01",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd. Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings. Remedy: Immediately stop using the bassinet and contact manufacturer for refund. Recall Number: CPSC-26-089 Units: 45,000",
+      "tesseract_original": {
+        "cer": 0.0312,
+        "wer": 0.0435,
+        "conf": 0.95,
+        "text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd. Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings. Remedy: Immediately stop using the bassinet and contact manufacturer 1 Recall Number: CPSC-26-089 Units: 45,000"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0368,
+        "wer": 0.087,
+        "conf": 0.9413,
+        "text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings Remedy: Immediately stop using the bassinet and contact manufacturer | Recall Number: CPSC-26-089 Units: 45,000"
+      },
+      "easyocr_original": {
+        "cer": 0.0368,
+        "wer": 0.0652,
+        "conf": 0.8155,
+        "text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd. Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings_ Remedy: Immediately stop using the bassinet and contact manufacturer Recall Number: CPSC-26-089 Units: 45,000"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0482,
+        "wer": 0.1522,
+        "conf": 0.724,
+        "text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd_ Recall Date 2026-03-15 Hazard: Suffocation and entrapment risk due t0 loose side railings Remedy: Immediately stop using the bassinet and contact manufacturer Recall Number_ CPSC-26-089 Units: 45,000"
+      },
+      "routed_system": {
+        "cer": 0.0312,
+        "wer": 0.0435,
+        "conf": 0.95,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "CONSUMER PRODUCT SAFETY COMMISSION RECALL NOTICE Product Name: Infant Sleeper Deluxe Bassinet Manufacturer: BabyCare Global Industries Ltd. Recall Date: 2026-03-15 Hazard: Suffocation and entrapment risk due to loose side railings. Remedy: Immediately stop using the bassinet and contact manufacturer 1 Recall Number: CPSC-26-089 Units: 45,000"
+      }
+    },
+    {
+      "record_id": "rec_en_clean_02",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit. Recommended Action: Return affected lots to pharmacy for replacement. Recall Number: FDA-D-2026-442",
+      "tesseract_original": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9531,
+        "text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit. Recommended Action: Return affected lots to pharmacy for replacement. Recall Number: FDA-D-2026-442"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0058,
+        "wer": 0.0476,
+        "conf": 0.9436,
+        "text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit Recommended Action: Return affected lots to pharmacy for replacement Recall Number: FDA-D-2026-442"
+      },
+      "easyocr_original": {
+        "cer": 0.0088,
+        "wer": 0.0714,
+        "conf": 0.8429,
+        "text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit: Recommended Action: Return affected lots to pharmacy for replacement_ Recall Number: FDA-D-2026-442"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0292,
+        "wer": 0.2381,
+        "conf": 0.7871,
+        "text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name Metformin Hydrochloride Extended-Release S00mg Manufacturer _ Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit , Recommended Action: Return affected Iots t0 pharmacy for replacement_ Recall Number_ FDA-D-2026-442"
+      },
+      "routed_system": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9531,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "FOOD AND DRUG ADMINISTRATION URGENT ALERT Product Name: Metformin Hydrochloride Extended-Release 500mg Manufacturer: Apex Pharma Laboratories Inc. Notice Date: 2026-04-10 Hazard: Detection of NDMA impurity above acceptable daily intake limit. Recommended Action: Return affected lots to pharmacy for replacement. Recall Number: FDA-D-2026-442"
+      }
+    },
+    {
+      "record_id": "rec_en_clean_03",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injury. Consumer Action: Stop riding immediately and schedule free repair. Campaign ID: BIKE-26-901",
+      "tesseract_original": {
+        "cer": 0.0076,
+        "wer": 0.0278,
+        "conf": 0.9525,
+        "text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injur Consumer Action: Stop riding immediately and schedule free repair. Campaign ID: BIKE-26-901"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0114,
+        "wer": 0.0556,
+        "conf": 0.9475,
+        "text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injur Consumer Action: Stop riding immediately and schedule free repair Campaign ID: BIKE-26-901"
+      },
+      "easyocr_original": {
+        "cer": 0.0114,
+        "wer": 0.0556,
+        "conf": 0.8168,
+        "text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injur_ Consumer Action: Stop riding immediately and schedule free repair: Campaign ID: BIKE-26-901"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0227,
+        "wer": 0.1389,
+        "conf": 0.7484,
+        "text": "SAFETY WARNING BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date; 2026-05-02 Hazard_ Front brake cable detachment can cause crash and serious injur_ Consumer Action: Stop riding immediately and schedule free repair, Campaign ID: BIKE-26-901"
+      },
+      "routed_system": {
+        "cer": 0.0076,
+        "wer": 0.0278,
+        "conf": 0.9525,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "SAFETY WARNING: BICYCLE BRAKE CABLE FAILURE Brand: Apex TrailMaster Mountain Bikes Date: 2026-05-02 Hazard: Front brake cable detachment can cause crash and serious injur Consumer Action: Stop riding immediately and schedule free repair. Campaign ID: BIKE-26-901"
+      }
+    },
+    {
+      "record_id": "rec_en_clean_04",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowout. Action: Authorized dealers will inspect and replace sensor module free of charge. Recall ID: NHTSA-26V-112",
+      "tesseract_original": {
+        "cer": 0.029,
+        "wer": 0.0444,
+        "conf": 0.9532,
+        "text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowou Action: Authorized dealers will inspect and replace sensor module free of Recall ID: NHTSA-26V-112"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0319,
+        "wer": 0.0667,
+        "conf": 0.9398,
+        "text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowou Action: Authorized dealers will inspect and replace sensor module free of Recall 1D: NHTSA-26V-112"
+      },
+      "easyocr_original": {
+        "cer": 0.029,
+        "wer": 0.0444,
+        "conf": 0.834,
+        "text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowou Action: Authorized dealers will inspect and replace sensor module free of Recall ID: NHTSA-26V-112"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0435,
+        "wer": 0.1556,
+        "conf": 0.8326,
+        "text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name Wireless Tire Pressure Monitoring Sensor Manufacturer _ SafeDrive Auto Components Recall Date 2026-06-18 Hazard: Inaccurale pressure readings may lead to undetected tire blowou Action: Authorized dealers will inspect and replace sensor module free of Recall ID: NHTSA-26V-112"
+      },
+      "routed_system": {
+        "cer": 0.029,
+        "wer": 0.0444,
+        "conf": 0.9532,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "NATIONAL HIGHWAY TRAFFIC SAFETY DEFECT NOTICE Product Name: Wireless Tire Pressure Monitoring Sensor Manufacturer: SafeDrive Auto Components Recall Date: 2026-06-18 Hazard: Inaccurate pressure readings may lead to undetected tire blowou Action: Authorized dealers will inspect and replace sensor module free of Recall ID: NHTSA-26V-112"
+      }
+    },
+    {
+      "record_id": "rec_en_clean_05",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 16oz Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illness. Remedy: Do not consume product. Return to store of purchase for full refund. Lot Codes: Lot 2605-B and Lot 2606-A",
+      "tesseract_original": {
+        "cer": 0.0258,
+        "wer": 0.0625,
+        "conf": 0.9483,
+        "text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 160z Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illn Remedy: Do not consume product. Return to store of purchase for full ref Lot Codes: Lot 2605-B and Lot 2606-A"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0258,
+        "wer": 0.0625,
+        "conf": 0.945,
+        "text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 160z Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illn Remedy: Do not consume product. Return to store of purchase for full ref Lot Codes: Lot 2605-B and Lot 2606-A"
+      },
+      "easyocr_original": {
+        "cer": 0.0287,
+        "wer": 0.0833,
+        "conf": 0.7835,
+        "text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 160z Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illn Remedy: Do not consume product Return to store of purchase for full ref Lot Codes: Lot 2605-B and Lot 2606-A"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0401,
+        "wer": 0.1458,
+        "conf": 0.8572,
+        "text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 1602 Distributed by: NutriHarvest Brands Recall Date 2026-07-22 Risk Potential contamination with Salmonella bacteria causing severe illn Remedy Do not consume product Return to store of purchase for full ref Lot Codes: Lot 2605-B and Lot 2606-A"
+      },
+      "routed_system": {
+        "cer": 0.0258,
+        "wer": 0.0625,
+        "conf": 0.9483,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "FDA PUBLIC HEALTH ADVISORY: SALMONELLA CONTAMINATION Product: Organic Crunchy Peanut Butter 160z Distributed by: NutriHarvest Brands Recall Date: 2026-07-22 Risk: Potential contamination with Salmonella bacteria causing severe illn Remedy: Do not consume product. Return to store of purchase for full ref Lot Codes: Lot 2605-B and Lot 2606-A"
+      }
+    },
+    {
+      "record_id": "rec_en_clean_06",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "clean_english",
+      "ground_truth_text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing fire hazard. Recommended Action: Unplug heater immediately and register for replacement kit. Recall Identifier: HEATER-26-440 Units: 120,000",
+      "tesseract_original": {
+        "cer": 0.0568,
+        "wer": 0.087,
+        "conf": 0.9484,
+        "text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing f Recommended Action: Unplug heater immediately and register for replac Recall Identifier: HEATER-26-440 Units: 120,000"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0568,
+        "wer": 0.087,
+        "conf": 0.938,
+        "text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing f Recommended Action: Unplug heater immediately and register for replac Recall Identifier: HEATER-26-440 Units: 120,000"
+      },
+      "easyocr_original": {
+        "cer": 0.0541,
+        "wer": 0.087,
+        "conf": 0.8559,
+        "text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing f Recommended Action: Unplug heater immediately and register for replace Recall Identifier: HEATER-26-440 Units: 120,000"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0757,
+        "wer": 0.2174,
+        "conf": 0.7894,
+        "text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name WarmHome 1500W Oscillating Space Heater Manufacturer _ WarmHome Electric Appliances Date; 2026-08-30 Hazard; Internal heating element can overheat and ignite casing: posing Recommended Action: Unplug heater immediately and register for replace Recall Identifier: HEATER-26-440 Units: 120,000"
+      },
+      "routed_system": {
+        "cer": 0.0568,
+        "wer": 0.087,
+        "conf": 0.9484,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "PRODUCT SAFETY RECALL: CERAMIC SPACE HEATER Product Name: WarmHome 1500W Oscillating Space Heater Manufacturer: WarmHome Electric Appliances Date: 2026-08-30 Hazard: Internal heating element can overheat and ignite casing, posing f Recommended Action: Unplug heater immediately and register for replac Recall Identifier: HEATER-26-440 Units: 120,000"
+      }
+    },
+    {
+      "record_id": "rec_en_diff_rot15",
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "ground_truth_text": "SAFETY RECALL NOTICE: 2-SLICE ELECTRIC TOASTER Product: QuickToast Deluxe Smart Toaster Manufacturer: CulinaryTech Devices Inc. Date: 2026-09-12 Hazard: Heating coils can remain energized after pop-up cycle. Remedy: Disconnect from power outlet and request repair box. Recall ID: CPSC-TOAST-26",
+      "tesseract_original": {
+        "cer": 1.0,
+        "wer": 1.0,
+        "conf": 0.0,
+        "text": ""
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0102,
+        "wer": 0.0789,
+        "conf": 0.9305,
+        "text": "SAFETY RECALL NOTICE: 2-SLICE ELECTRIC TOASTER Product: QuickToast Deluxe Smart Toaster Manufacturer: CulinaryTech Devices Inc Date: 2026-09-12 Hazard: Heating coils can remain energized after pop-up cycle. Remedy: Disconnect from power outlet and request repair box Recall 1D: CPSC-TOAST-26"
+      },
+      "easyocr_original": {
+        "cer": 0.7543,
+        "wer": 0.9737,
+        "conf": 0.9097,
+        "text": "ID: TOASTER ELECTRIC - 2-SLICE Toaster NOTICE: Smart RECALL Deluxe Inc: SAFETY Devices cycle. QuickToast pop-up CulinaryTech Product: after box energized repair Manufacturer: request remain 2026-09-12 and outlet can coils power Date: Heating ' from Hazard: Disconnect CPSC-TOAST-26 Remedy: Recall"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0546,
+        "wer": 0.1316,
+        "conf": 0.7661,
+        "text": "SAFETY RECALL NOTICE: 2-SLICE ELECTRIC TOASTER Product: QuickToast Deluxe Smart Toaster Manufacturer: CulinaryTech Devices Inc_ Date; 2026-09-12 Hazard: Heating coils can remain energized after pop-up Remedy: Disconnect from power outlet and request repair box Recall ID: CPSC-TOAST-26 cycle"
+      },
+      "routed_system": {
+        "cer": 0.0102,
+        "wer": 0.0789,
+        "conf": 0.9305,
+        "engine": "tesseract",
+        "trajectory": "difficult_low_confidence_second_opinion",
+        "rationale": "Triggered EasyOCR second opinion due to: visual degradation detected. Retained Tesseract result (0.93 >= 0.77).",
+        "text": "SAFETY RECALL NOTICE: 2-SLICE ELECTRIC TOASTER Product: QuickToast Deluxe Smart Toaster Manufacturer: CulinaryTech Devices Inc Date: 2026-09-12 Hazard: Heating coils can remain energized after pop-up cycle. Remedy: Disconnect from power outlet and request repair box Recall 1D: CPSC-TOAST-26"
+      }
+    },
+    {
+      "record_id": "rec_en_diff_rot_neg20",
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "ground_truth_text": "BATTERY PACK OVERHEATING RECALL Product Name: Lithium-Ion 20V Max Power Drill Battery Manufacturer: PowerCraft Tool Corporation Recall Date: 2026-09-25 Hazard: Battery cells can short circuit during charging, creating fire risk. Consumer Action: Stop charging battery and recycle at authorized drop-off depot. Recall Number: BATT-26-880",
+      "tesseract_original": {
+        "cer": 1.0,
+        "wer": 1.0,
+        "conf": 0.0,
+        "text": ""
+      },
+      "tesseract_preprocessed": {
+        "cer": 1.0,
+        "wer": 1.0,
+        "conf": 0.0,
+        "text": ""
+      },
+      "easyocr_original": {
+        "cer": 0.7292,
+        "wer": 1.0227,
+        "conf": 0.8889,
+        "text": "at fire BATTERY : Product PACK OVERHEAT Name: Manufacturer: Lithium-Ion TING Recall PowerCraft ` RECALL Date: 20v E Hazard: 2026-C Max Tool Power Battery = -09-25 Consumer Corporation Drill cells Battery Recall Action: can Number: short Stop : circuit charging BA during = TT-26-880 battery = charging; and recycle creating authorized risk: drop-0"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.7798,
+        "wer": 1.25,
+        "conf": 0.7168,
+        "text": "84 7 % Or Roduct = ERY Manufacturer: PACK Recall ! 1 Hazard: OVERHEAT Date: Lithium-Ion _ Consumer _ PowerCraft Recall ! Battery = 2026-( TING ~09-25 20v = Number: Action: cells Tool e RECALL Max L 8 9 Corporation 1 short charging 5 [-26-880 Drill = circuit Battery battery _ 3 and charging; recycle _ creating - authorized = 3 risk."
+      },
+      "routed_system": {
+        "cer": 0.7798,
+        "wer": 1.25,
+        "conf": 0.7168,
+        "engine": "easyocr",
+        "trajectory": "difficult_low_confidence_second_opinion",
+        "rationale": "Triggered EasyOCR second opinion due to: visual degradation detected, low confidence (0.00 < 0.70), empty text output from Tesseract. Selected EasyOCR because Tesseract yielded empty text.",
+        "text": "84 7 % Or Roduct = ERY Manufacturer: PACK Recall ! 1 Hazard: OVERHEAT Date: Lithium-Ion _ Consumer _ PowerCraft Recall ! Battery = 2026-( TING ~09-25 20v = Number: Action: cells Tool e RECALL Max L 8 9 Corporation 1 short charging 5 [-26-880 Drill = circuit Battery battery _ 3 and charging; recycle _ creating - authorized = 3 risk."
+      }
+    },
+    {
+      "record_id": "rec_en_diff_blur",
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "ground_truth_text": "BURN HAZARD WARNING: CHILDREN SLEEPWEAR Product Name: CozyKids Fleece Pajama Sets Manufacturer: Global Apparel Solutions Notice Date: 2026-10-01 Hazard: Sleepwear fails to meet federal flammability standards. Remedy: Keep away from fire and return for full purchase price refund. Recall Number: CPSC-26-940",
+      "tesseract_original": {
+        "cer": 0.0458,
+        "wer": 0.2927,
+        "conf": 0.7924,
+        "text": "BURN HAZARD WARNING CHILDREN SLEEPWEAR Product Name CozyKids Fleece Pajama Sets Manufacturer Global Appare! Solutions Notice Date 2026-10-01 Hazard Sleepwear tats to meet federal flammability standards Remedy Keep away trom fire and return for full purchase price refund Recall Number CPSC-26-940"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0654,
+        "wer": 0.3415,
+        "conf": 0.7871,
+        "text": "BURN HAZARD WARNING CHILDREN SLEEPWEAR Product Name CozyKids Fleece Pajama Sets Manufacturer Global Appare! Sotutons Notice Date 2026-10-01 Hazard Sleepwear tats to meet federal Nammabéity standards Remedy Keep away trom fire and return for full purchase price refund Recall Number CPSC-26-940"
+      },
+      "easyocr_original": {
+        "cer": 0.2876,
+        "wer": 0.8293,
+        "conf": 0.1113,
+        "text": "BURN IMAZARD WARNING CHILDREN SLEEPWEAR Produdhama Colykds Fltce Palma Sets Manuacue Gbbu aoue Soutons Notce Date202610-01 Halard Sieeoaea tats to meet tederal nammabity standards Remedy Ketp u4dytom and retun toipurcae prce retnd Recu numbr CPSC 26.940 ae"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.4281,
+        "wer": 0.9268,
+        "conf": 0.1131,
+        "text": "BURNTMZARD WARNIRG CHILDREN SLEEPWEAR Proacnane Conka Fice Parima Sets Manutcue Gbbt Anoue Souton Kdce Dale 7026 10 01 Muud Stronet {4 t0 meet ledeu anmaoaty snduds Remedy Ketp 444y andretun tipucae prce rend Recanumor CPSC 26 940 Iom Je"
+      },
+      "routed_system": {
+        "cer": 0.0654,
+        "wer": 0.3415,
+        "conf": 0.7871,
+        "engine": "tesseract",
+        "trajectory": "difficult_low_confidence_second_opinion",
+        "rationale": "Triggered EasyOCR second opinion due to: visual degradation detected. Retained Tesseract result (0.79 >= 0.11).",
+        "text": "BURN HAZARD WARNING CHILDREN SLEEPWEAR Product Name CozyKids Fleece Pajama Sets Manufacturer Global Appare! Sotutons Notice Date 2026-10-01 Hazard Sleepwear tats to meet federal Nammabéity standards Remedy Keep away trom fire and return for full purchase price refund Recall Number CPSC-26-940"
+      }
+    },
+    {
+      "record_id": "rec_en_diff_lowcontrast",
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "ground_truth_text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc. Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke event. Action: Contact SafeGuard customer service for expedited sensor replacement. Model Number: SG-SMOKE-2026",
+      "tesseract_original": {
+        "cer": 0.0352,
+        "wer": 0.0476,
+        "conf": 0.9356,
+        "text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc. Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke Action: Contact SafeGuard customer service for expedited sensor replace Model Number: SG-SMOKE-2026"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0381,
+        "wer": 0.0714,
+        "conf": 0.9329,
+        "text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke Action: Contact SafeGuard customer service for expedited sensor replace Model Number: SG-SMOKE-2026"
+      },
+      "easyocr_original": {
+        "cer": 0.0381,
+        "wer": 0.0714,
+        "conf": 0.8042,
+        "text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc_ Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke Action: Contact SafeGuard customer service for expedited sensor replace Model Number: SG-SMOKE-2026"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0557,
+        "wer": 0.1905,
+        "conf": 0.7754,
+        "text": "CRITICAL ALERT RESIDENTIAL SMOKE DETECTOR Product Name SafeGuard Dual-Sensor Smoke Alarm Manufacturer _ SafeGuard Home Security Inc. Recall Dale- 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke Action: Contact SafeGuard customer service for expedited sensor replace Model Number; SG-SMOKE-2026"
+      },
+      "routed_system": {
+        "cer": 0.0381,
+        "wer": 0.0714,
+        "conf": 0.9329,
+        "engine": "tesseract",
+        "trajectory": "difficult_low_confidence_second_opinion",
+        "rationale": "Triggered EasyOCR second opinion due to: visual degradation detected. Retained Tesseract result (0.93 >= 0.78).",
+        "text": "CRITICAL ALERT: RESIDENTIAL SMOKE DETECTOR Product Name: SafeGuard Dual-Sensor Smoke Alarm Manufacturer: SafeGuard Home Security Inc Recall Date: 2026-10-05 Hazard: Battery contact corrosion may silence alarm during active smoke Action: Contact SafeGuard customer service for expedited sensor replace Model Number: SG-SMOKE-2026"
+      }
+    },
+    {
+      "record_id": "rec_en_diff_noise",
+      "language": "en",
+      "difficulty": "hard",
+      "category": "difficult_english",
+      "ground_truth_text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates. Remedy: Hospital biomedical engineers must apply firmware patch v3.2. Recall Campaign: MED-26-707",
+      "tesseract_original": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9529,
+        "text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates. Remedy: Hospital biomedical engineers must apply firmware patch v3.2. Recall Campaign: MED-26-707"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0064,
+        "wer": 0.0526,
+        "conf": 0.9518,
+        "text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates Remedy: Hospital biomedical engineers must apply firmware patch v3.2 Recall Campaign: MED-26-707"
+      },
+      "easyocr_original": {
+        "cer": 0.0032,
+        "wer": 0.0263,
+        "conf": 0.878,
+        "text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates_ Remedy: Hospital biomedical engineers must apply firmware patch v3.2. Recall Campaign: MED-26-707"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0225,
+        "wer": 0.1842,
+        "conf": 0.7844,
+        "text": "MEDICAL EQUIPMENT SAFETY ALERT INFUSION PUMP Product MediFlow Automated Infusion Pump System Manufacturer _ MediTech Health Systems Date; 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates. Remedy Hospital biomedical engineers must apply firmware patch v3.2 Recall Campaign: MED-26-707"
+      },
+      "routed_system": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9529,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "MEDICAL EQUIPMENT SAFETY ALERT: INFUSION PUMP Product: MediFlow Automated Infusion Pump System Manufacturer: MediTech Health Systems Date: 2026-10-08 Hazard: Software defect causes inaccurate fluid delivery rates. Remedy: Hospital biomedical engineers must apply firmware patch v3.2. Recall Campaign: MED-26-707"
+      }
+    },
+    {
+      "record_id": "rec_hi_clean_01",
+      "language": "hi",
+      "difficulty": "easy",
+      "category": "hindi",
+      "ground_truth_text": "खाद्य सुरक्षा एवं मानक प्राधिकरण जन सूचना उत्पाद: शुद्ध मसाला पावडर ५०० ग्राम निर्माता: भारत स्पाइस उद्योग प्राइवेट लिमिटेड दिनांक: 2026-05-15 खतरा: स्वास्थ्य के लिए हानिकारक मिलावट की पुष्टि। कार्रवाई: उपभोक्ता तुरंत उपयोग बंद करें और धनवापसी प्राप्त करें। रिकॉल क्रमांक: FSSAI-26-102",
+      "tesseract_original": {
+        "cer": 0.7579,
+        "wer": 0.9524,
+        "conf": 0.4376,
+        "text": "GMT GAM Ud Ach We GA AT SAUTE: Yqel AAT WAST 4oo TRA ARATE: URd CSS Beart tRigde aes afte: 2026-05-15 GR: Ta & at sMiore aferae wt yyefi RRS: Soule Ga SIG de HT SR eae WA we Cele GRAM: FSSAI-26-102"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.7965,
+        "wer": 1.0,
+        "conf": 0.436,
+        "text": "WIT REM Ce AAS TH GF TA FAUTS: YU AAT WAST 4oo TRA afte: 2026 05 15 GR: aU & ae srafore aferae Hi yyefi areas: sautam a Toa se we oh ears RTT we Reta HATH: FSSAI 26 102"
+      },
+      "easyocr_original": {
+        "cer": 0.1193,
+        "wer": 0.4048,
+        "conf": 0.5533,
+        "text": "खाद्य सुरकषा एवं मानक प्राधकिरण जन सूचना उत्पादः शुद्ध मसाला पावडर ५०० ग्राम नर्माताः भारत स्पाइस उद्योग प्राइवेट लमिटैड दनिांकः २०२६-०५-१५ खतराः स्वास्थ्य के लएि हानकिारक मलावट की पुष्टी कार्रवाईः उपभोकता तुरंत उपयोग बंद करें और धनवापसी प्राप्त करें| रकिॉल करमांकः FSSAI-26-102"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.2281,
+        "wer": 0.5714,
+        "conf": 0.5621,
+        "text": "खादय सुरक्षा एवं मानक प्राधकिरण जन सूचना उत्पादः शुदध मसाला पावडर ५०० ग्राम नर्माताः भारत स्पाइस उद्योग लमिटिड दनिांकः २०२६ ०५ १५ खतराः स्वास्थ्य के लएि हानकिारक मलिािवट की पुष्टाी कार्रवाईः उपभोक्ता तुरंत उपयोग बंद करे और धनवापसी प्राप्त करे| रकिॉल करमांकः FSSAI २६ १०२ प्राइवेट"
+      },
+      "routed_system": {
+        "cer": 0.1193,
+        "wer": 0.4048,
+        "conf": 0.5533,
+        "engine": "easyocr",
+        "trajectory": "hindi_specialized_engine",
+        "rationale": "Hindi script/language detected; routing directly to EasyOCR with ['hi', 'en'].",
+        "text": "खाद्य सुरकषा एवं मानक प्राधकिरण जन सूचना उत्पादः शुद्ध मसाला पावडर ५०० ग्राम नर्माताः भारत स्पाइस उद्योग प्राइवेट लमिटैड दनिांकः २०२६-०५-१५ खतराः स्वास्थ्य के लएि हानकिारक मलावट की पुष्टी कार्रवाईः उपभोकता तुरंत उपयोग बंद करें और धनवापसी प्राप्त करें| रकिॉल करमांकः FSSAI-26-102"
+      }
+    },
+    {
+      "record_id": "rec_hi_clean_02",
+      "language": "hi",
+      "difficulty": "medium",
+      "category": "hindi",
+      "ground_truth_text": "खिलौना सुरक्षा चेतावनी सूचना उत्पाद: बच्चों की इलेक्ट्रॉनिक कार टॉय ब्रांड: बाल आनंद टॉयज कॉर्पोरेशन दिनांक: 2026-06-20 खतरा: छोटे पुर्जों के टूटने से बच्चों के लिए दम घुटने का गंभीर जोखिम। सुझाव: बच्चों से खिलौना तुरंत दूर रखें और निकटतम केंद्र पर लौटाएं। सुरक्षा कोड: TOY-HI-26",
+      "tesseract_original": {
+        "cer": 0.7491,
+        "wer": 0.9783,
+        "conf": 0.4523,
+        "text": "Glee Raw sarah Gea SATS: SA Ht SctHeafes HR cig RIS: Ta AA cast PRU alia: 2026-06-20 UR: Sie Weil G Tea S Saat G ae GA YC or THAR GSA | Yala: seat B GT Qa GR US ik ahead Sax wR ere GRAM HIS: TOY-HI-26"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.828,
+        "wer": 1.0,
+        "conf": 0.4903,
+        "text": "afate: 2026 06 20 GU: Ble Gea G eer S aaa S ae aa Ger an THR Gray Gala: eal B GT Ga GR US sik aes Sax we cer QRHM HS: TOY Hi 26"
+      },
+      "easyocr_original": {
+        "cer": 0.1111,
+        "wer": 0.3696,
+        "conf": 0.582,
+        "text": "खलौना सुरकषा चेतावनी सूचना उत्पादः बच्चों की इलेक्ट्रॉनकि कार टॉय ब्रांडः बाल आनंद टॉयज कॉर्पोरेशन दनिांकः २०२६-०6-२० खतराः छोटे पुर्जों के टूटने से बच्चों के लएि दम घुटने का गंभीर जोखमि| सुझावः बच्चों से खलौना तुरंत दूर रखें और नकिटतम केंदर पर लौटाएं| सुरकषा काडः TOY-HI-26"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.1326,
+        "wer": 0.5,
+        "conf": 0.5949,
+        "text": "खलौना सुरकषा चेतावनी सूचना उत्पादः बच्चों की इलेक्ट्रॉनकि कार टॉय ब्रांडः बाल आनंद टॉयज कॉर्पोरेशन दनिांकः २०२६ ०६ २० खतराः छोटे पुर्जों के टूटने से बच्चों के लए दम घुटने का गंभीर जोखमि| सुझावः बच्चों से खलौना तुरंत दूर रखे और नकिटतम केंदर पर लौटाएं| सुरकषा कोडः TOY HI २६"
+      },
+      "routed_system": {
+        "cer": 0.1111,
+        "wer": 0.3696,
+        "conf": 0.582,
+        "engine": "easyocr",
+        "trajectory": "hindi_specialized_engine",
+        "rationale": "Hindi script/language detected; routing directly to EasyOCR with ['hi', 'en'].",
+        "text": "खलौना सुरकषा चेतावनी सूचना उत्पादः बच्चों की इलेक्ट्रॉनकि कार टॉय ब्रांडः बाल आनंद टॉयज कॉर्पोरेशन दनिांकः २०२६-०6-२० खतराः छोटे पुर्जों के टूटने से बच्चों के लएि दम घुटने का गंभीर जोखमि| सुझावः बच्चों से खलौना तुरंत दूर रखें और नकिटतम केंदर पर लौटाएं| सुरकषा काडः TOY-HI-26"
+      }
+    },
+    {
+      "record_id": "rec_hi_clean_03",
+      "language": "hi",
+      "difficulty": "medium",
+      "category": "hindi",
+      "ground_truth_text": "अग्नि सुरक्षा रिकॉल बुलेटिन उत्पाद का नाम: घरेलू रूम हीटर 2000 वॉट निर्माता: सूर्य इलेक्ट्रिकल्स लिमिटेड सूचना दिनांक: 2026-07-11 खतरा: अत्यधिक गर्म होने पर आग लगने और जलने का खतरा। उपभोक्ता निर्देश: बिजली का प्लग निकालें और निशुल्क मरम्मत कराएं। रिकॉल पहचान: SURYA-26-09",
+      "tesseract_original": {
+        "cer": 0.7565,
+        "wer": 0.9302,
+        "conf": 0.4041,
+        "text": "SAG HT ATA: UG TA lex 2000 le ARGH: Fea scenic aes EAI aH: 2026-07-11 GER: sual TRA FA RR ST GH Bk Ue GT GAT! Sata ARE: sfSrehh aor ery afeorct she aye RAHA PTT fect USAMA: SURYA-26-09"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.7675,
+        "wer": 1.0,
+        "conf": 0.4538,
+        "text": "TATE HI ATA: UGTA ex 2000 aie aRTa: axa gdHextore atAtes We afte: 2026 07 11 GER: states 1A SF WR SM AA AR GA HT ERT souieal aRee: afach ar gem afaerd sik aR aA SATU feta TEA: SURYA 26 09"
+      },
+      "easyocr_original": {
+        "cer": 0.2362,
+        "wer": 0.6512,
+        "conf": 0.6108,
+        "text": "अग्न सुरकषा रकॉल बुलेटनि उत्पाद का नामः हीटर २००० वॉट नर्माताः सूर्य इलेक्ट्रकिल्स लमिटैड सूचना दनिांकः २०२६-०७ १1 खतराः अत्यधकि गर्म होने पर आग लगने और जलने का खतरा| उपभोक्ता नर्देशः बजिली का प्लग नकिालें और नशिल्क मरम्मत कराएं| रकिॉल पहचानः SURYA -26-09 घरेलू रूम"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.1919,
+        "wer": 0.5814,
+        "conf": 0.543,
+        "text": "अग्ना सुरक्षा रकिॉल बुलेटनि उत्पाद का नामः घरेलू रूम हीटर २००० वॉट नर्माताः सूर्य इलेक्ट्रकिल्स लमिटिड सूचना दनिांकः २०२६ ०७ ११ खतराः अत्यधकि गर्म होने पर आग लगने और जलने का खतरा| उपभोक्ता नर्देशः बजिली का प्लग नकिाले और नशिल्क मरम्मत कराएं| रकिॉल पहचानः SURYA २६ ०९"
+      },
+      "routed_system": {
+        "cer": 0.2362,
+        "wer": 0.6512,
+        "conf": 0.6108,
+        "engine": "easyocr",
+        "trajectory": "hindi_specialized_engine",
+        "rationale": "Hindi script/language detected; routing directly to EasyOCR with ['hi', 'en'].",
+        "text": "अग्न सुरकषा रकॉल बुलेटनि उत्पाद का नामः हीटर २००० वॉट नर्माताः सूर्य इलेक्ट्रकिल्स लमिटैड सूचना दनिांकः २०२६-०७ १1 खतराः अत्यधकि गर्म होने पर आग लगने और जलने का खतरा| उपभोक्ता नर्देशः बजिली का प्लग नकिालें और नशिल्क मरम्मत कराएं| रकिॉल पहचानः SURYA -26-09 घरेलू रूम"
+      }
+    },
+    {
+      "record_id": "rec_hi_clean_04",
+      "language": "hi",
+      "difficulty": "hard",
+      "category": "hindi",
+      "ground_truth_text": "वाहन सुरक्षा एवं गुणवत्ता चेतावनी वाहन मॉडल: गति ऑटो स्कूटर 125cc कंपनी: गति मोटर्स इंडिया लिमिटेड रिकॉल तिथि: 2026-08-04 खराबी: फ्रंट डिस्क ब्रेक के लॉक होने से दुर्घटना का अंदेशा। कदम: अधिकृत डीलर से संपर्क कर ब्रेक कैलीपर निःशुल्क बदलवाएं। अभियान संख्या: GATI-26-MOTO",
+      "tesseract_original": {
+        "cer": 0.7407,
+        "wer": 0.9535,
+        "conf": 0.4028,
+        "text": "TST ARAM Ud Trae Sarat OSA AlSc: Taf Biel TaHEX 125cc out: Taf Hee seh ahies festa afaf2026-08-04 Wat: Exc SH RH H cin SA SF QC HT saaw| aH: seffdrd Stee F UH Gr LRH Hela Ae Jaca | ufo Peal GATI-26-MOTO"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.7926,
+        "wer": 0.9767,
+        "conf": 0.4214,
+        "text": "ares Aisa: Mal Biel THX 125cc xfiel afaf?2026 08 04 Weal: ure Stim Ra & cig eA F QueA H sean wan: sufha Her 3S aoe HX RH Seer Aw sacra oufard Fal: GAT! 26 MOTO"
+      },
+      "easyocr_original": {
+        "cer": 0.1407,
+        "wer": 0.4651,
+        "conf": 0.496,
+        "text": "वाहन सुरक्षा एवं गुणवत्ता चेतावनी वाहन मॉडलः गर्ता ऑटो स्कूटर १२५cc कंपनीः गर्ता मोटर्स इंडया लमिटैड रकिॉल तथिः २०२६-08-०४ खराबीः फ्रंट डसि्क ब्रेक के लॉक होने से दुर्घटना का अंदेशा| कदमः अधकिृत डीलर से संपर्क कर ब्रेक कैलीपर नशिल्क बदलवाएं| अभयान संख्याः GATI-२6-MOTO"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.2185,
+        "wer": 0.6279,
+        "conf": 0.6813,
+        "text": "वाहन सुरकषा एवं गुणवत्ता चेतावनी वाहन मॉडलः गर्ता ऑटो स्कूटर १२Scc कंपनीः गर्ता इंडया लमिटिड रकिॉल तथिः २०२६ ०८ ०४ खराबीः फरंट डसि्क ब्रेक के लॉक होने से दुर्घटना का अंदेशा| कदमः अधकिृत डीलर से संपर्क कर ब्रेक कैलीपर नशिल्क बदलवाएं| अभयान संख्याः GATI २६ MOTO मोटर्स"
+      },
+      "routed_system": {
+        "cer": 0.1407,
+        "wer": 0.4651,
+        "conf": 0.496,
+        "engine": "easyocr",
+        "trajectory": "hindi_specialized_engine",
+        "rationale": "Hindi script/language detected; routing directly to EasyOCR with ['hi', 'en'].",
+        "text": "वाहन सुरक्षा एवं गुणवत्ता चेतावनी वाहन मॉडलः गर्ता ऑटो स्कूटर १२५cc कंपनीः गर्ता मोटर्स इंडया लमिटैड रकिॉल तथिः २०२६-08-०४ खराबीः फ्रंट डसि्क ब्रेक के लॉक होने से दुर्घटना का अंदेशा| कदमः अधकिृत डीलर से संपर्क कर ब्रेक कैलीपर नशिल्क बदलवाएं| अभयान संख्याः GATI-२6-MOTO"
+      }
+    },
+    {
+      "record_id": "rec_pdf_page_01",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "scanned_pdf",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026",
+      "tesseract_original": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9469,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9483,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026"
+      },
+      "easyocr_original": {
+        "cer": 0.0115,
+        "wer": 0.0571,
+        "conf": 0.8278,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0077,
+        "wer": 0.0286,
+        "conf": 0.8621,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026"
+      },
+      "routed_system": {
+        "cer": 0.0,
+        "wer": 0.0,
+        "conf": 0.9469,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 1 OF 3 UNITED STATES CONSUMER PRODUCT SAFETY COMMISSION General Notice for Portable Camping Stoves Summary: Joint voluntary recall of outdoor butane camping stoves. Issued: October 2026 Reference Document: CPSC-PDF-BULLETIN-2026"
+      }
+    },
+    {
+      "record_id": "rec_pdf_page_02",
+      "language": "en",
+      "difficulty": "medium",
+      "category": "scanned_pdf",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing flash fire. Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800",
+      "tesseract_original": {
+        "cer": 0.0368,
+        "wer": 0.0455,
+        "conf": 0.9471,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800"
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0368,
+        "wer": 0.0455,
+        "conf": 0.9495,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800"
+      },
+      "easyocr_original": {
+        "cer": 0.046,
+        "wer": 0.0909,
+        "conf": 0.8429,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing Units Affected: Approximately 38,000 units sold nationwide Serial Number Range: CP26-0001 through CP26-3800"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0429,
+        "wer": 0.0682,
+        "conf": 0.8388,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800"
+      },
+      "routed_system": {
+        "cer": 0.0368,
+        "wer": 0.0455,
+        "conf": 0.9471,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.95 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 2 OF 3 IDENTIFICATION AND HAZARD SPECIFICATIONS Product: CampPro Portable Butane Stove Model CP-2026 Hazard Description: Gas valve seal failure allows butane leakage causing Units Affected: Approximately 38,000 units sold nationwide. Serial Number Range: CP26-0001 through CP26-3800"
+      }
+    },
+    {
+      "record_id": "rec_pdf_page_03",
+      "language": "en",
+      "difficulty": "easy",
+      "category": "scanned_pdf",
+      "ground_truth_text": "OFFICIAL RECALL BULLETIN - PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Friday. Refund or replacement valve assembly provided free of charge. Bulletin Authorized by Office of Product Safety.",
+      "tesseract_original": {
+        "cer": 0.0122,
+        "wer": 0.0217,
+        "conf": 0.9439,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Fri Refund or replacement valve assembly provided free of charge. Bulletin Authorized by Office of Product Safety."
+      },
+      "tesseract_preprocessed": {
+        "cer": 0.0122,
+        "wer": 0.0217,
+        "conf": 0.9357,
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Fri Refund or replacement valve assembly provided free of charge. Bulletin Authorized by Office of Product Safety."
+      },
+      "easyocr_original": {
+        "cer": 0.0366,
+        "wer": 0.1087,
+        "conf": 0.8509,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Fric Refund or replacement valve assembly provided free of charge. Bulletin Authorized Office of Product Safety by"
+      },
+      "easyocr_preprocessed": {
+        "cer": 0.0213,
+        "wer": 0.0652,
+        "conf": 0.8415,
+        "text": "OFFICIAL RECALL BULLETIN PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Fric Refund or replacement valve assembly provided free of charge: Bulletin Authorized by Office of Product Safety."
+      },
+      "routed_system": {
+        "cer": 0.0122,
+        "wer": 0.0217,
+        "conf": 0.9439,
+        "engine": "tesseract",
+        "trajectory": "clean_english_direct",
+        "rationale": "Clean English input with high confidence (0.94 >= 0.70); accepted Tesseract result directly without second opinion.",
+        "text": "OFFICIAL RECALL BULLETIN - PAGE 3 OF 3 REMEDY AND CONSUMER CONTACT INFORMATION Remedy: Consumers should immediately cease using recalled stoves. Contact: CampPro Safety Hotline at 1-800-555-0199 Monday through Fri Refund or replacement valve assembly provided free of charge. Bulletin Authorized by Office of Product Safety."
+      }
+    }
+  ]
+}
